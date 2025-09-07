@@ -105,7 +105,7 @@ const CreateAccount = () => {
       };
       
       // Send registration data to backend
-      const response = await fetch('https://animeyoubackend.onrender.com/api/auth/register', {
+      const response = await fetch('https://bookstore-0hqj.onrender.com/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
