@@ -32,7 +32,7 @@ const upload = multer({ storage: storage });
 // Apply middleware to specific routes or use it in the router
 router.use(protect); // All routes require authentication
 
-// Get all products (unchanged)
+// Get all products
 router.get('/products', async (req, res) => {
   try {
     const products = await Product.find({});
@@ -42,7 +42,7 @@ router.get('/products', async (req, res) => {
   }
 });
 
-// Get single product (unchanged)
+// Get single product
 router.get('/products/:id', async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
@@ -55,24 +55,22 @@ router.get('/products/:id', async (req, res) => {
   }
 });
 
-// Create new product with Cloudinary integration
-router.post('/products', upload.single('image'), async (req, res) => {
+// Create new product with Cloudinary integration (admin only)
+router.post('/products', protect, admin, upload.single('image'), async (req, res) => {
   try {
     const { name, description, price, category, subcategory, countInStock } = req.body;
     
-    // Check if image was uploaded
     if (!req.file) {
       return res.status(400).json({ message: 'Image is required' });
     }
     
-    // Create new product with Cloudinary URL
     const product = new Product({
       name,
       description,
       price,
       category,
       subcategory,
-      image: req.file.path, // Cloudinary URL is stored here
+      image: req.file.path,
       countInStock
     });
     
@@ -83,8 +81,8 @@ router.post('/products', upload.single('image'), async (req, res) => {
   }
 });
 
-// Update product route with Cloudinary
-router.put('/products/:id', upload.single('image'), async (req, res) => {
+// Update product route with Cloudinary (admin only)
+router.put('/products/:id', protect, admin, upload.single('image'), async (req, res) => {
   try {
     const productId = req.params.id;
     const updateData = {
@@ -96,12 +94,9 @@ router.put('/products/:id', upload.single('image'), async (req, res) => {
       countInStock: req.body.countInStock
     };
 
-    // Handle image updates
     if (req.file) {
-      // If a new file was uploaded to Cloudinary
       updateData.image = req.file.path;
     } else if (req.body.imageUrl) {
-      // If keeping the existing image
       updateData.image = req.body.imageUrl;
     }
 
@@ -122,15 +117,13 @@ router.put('/products/:id', upload.single('image'), async (req, res) => {
   }
 });
 
-// Delete product (unchanged)
-router.delete('/products/:id', async (req, res) => {
+// Delete product
+router.delete('/products/:id', admin, async (req, res) => {
   try {
     const product = await Product.findByIdAndDelete(req.params.id);
-    
     if (!product) {
       return res.status(404).json({ message: 'Product not found' });
     }
-    
     res.json({ message: 'Product deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -163,7 +156,7 @@ router.post('/users', async (req, res) => {
   }
 });
 
-// Add order management routes
+// Order management routes
 router.get('/orders', async (req, res) => {
   try {
     const orders = await Order.find().populate('user', 'firstName lastName email');
@@ -173,7 +166,7 @@ router.get('/orders', async (req, res) => {
   }
 });
 
-// Stats route now uses admin middleware instead of manager
+// Stats route (admin only)
 router.get('/stats', admin, async (req, res) => {
   // Only admins can see stats
   // ...your code
@@ -225,6 +218,5 @@ router.put('/users/:userId/remove-admin', admin, async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
-
 
 module.exports = router;
