@@ -7,17 +7,23 @@ const cloudinary = require('cloudinary').v2;
 const Product = require('../models/Product');
 const User = require('../models/User');
 const Order = require('../models/Order');
-// Add the middleware at the router level
 const { protect, admin } = require('../middleware/authMiddleware');
 
-// Configure Cloudinary
+// ---------------- Cloudinary Config ----------------
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-// Configure multer for Cloudinary uploads
+// Log the Cloudinary config to verify environment variables are loaded
+console.log('Cloudinary config:', {
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+// ----------------------------------------------------
+
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
@@ -29,8 +35,11 @@ const storage = new CloudinaryStorage({
 
 const upload = multer({ storage: storage });
 
-// Apply middleware to specific routes or use it in the router
-router.use(protect); // All routes require authentication
+// Apply middleware to all routes
+router.use(protect);
+
+// ...rest of your routes...
+
 
 // Get all products
 router.get('/products', async (req, res) => {
