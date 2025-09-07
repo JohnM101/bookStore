@@ -7,7 +7,7 @@ import OrderManagement from './admin/OrderManagement';
 import { FaSignOutAlt } from 'react-icons/fa';
 import './AdminDashboard.css';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://animeyoubackend.onrender.com';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://bookstore-0hqj.onrender.com';
 
 const CATEGORIES = [
   'Desktop',

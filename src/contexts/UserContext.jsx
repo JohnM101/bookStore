@@ -32,7 +32,7 @@ export const UserProvider = ({ children }) => {
     
     // Case 2: If email and password are provided, authenticate with the server
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://animeyoubackend.onrender.com';
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://bookstore-0hqj.onrender.com';
       const response = await fetch(`${API_URL}/api/auth/login`, {
         method: 'POST',
         headers: {

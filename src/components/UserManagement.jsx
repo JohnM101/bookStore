@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useUser } from '../../contexts/UserContext';
 import './UserManagement.css';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://animeyoubackend.onrender.com';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://bookstore-0hqj.onrender.com';
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
