@@ -1,5 +1,4 @@
 {
-  "name": "anime-you",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -24,6 +23,9 @@
     "react-router-dom": "^6.14.0",
     "react-scripts": "5.0.1",
     "web-vitals": "^2.1.4"
+  },
+  "engines": {
+  "node": "18.x"
   },
   "scripts": {
     "start": "react-scripts start",
