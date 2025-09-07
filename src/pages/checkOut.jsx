@@ -98,7 +98,7 @@ const Checkout = () => {
         }
       };
 
-      const response = await axios.post('https://animeyoubackend.onrender.com/api/orders', orderData, config);
+      const response = await axios.post('https://bookstore-0hqj.onrender.com/api/orders', orderData, config);
 
       if (response.data) {
         // Clear cart from localStorage

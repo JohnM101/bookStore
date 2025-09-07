@@ -21,7 +21,7 @@ const Profile = () => {
             }
 
             try {
-                const API_URL = 'https://animeyoubackend.onrender.com';
+                const API_URL = 'https://bookstore-0hqj.onrender.com';
                 // Use the /api/orders/myorders endpoint instead
                 const response = await fetch(`${API_URL}/api/orders/myorders`, {
                     headers: {
