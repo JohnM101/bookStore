@@ -55,23 +55,27 @@ app.use('/api/admin', protect, admin, adminRoutes);
 // Create admin user if it doesn't exist
 const createAdminUser = async () => {
   try {
-    const adminExists = await User.findOne({ email: 'admin@animeyou.com' });
+    // Match the exact admin email
+    const adminExists = await User.findOne({ email: 'admin' });
     
     if (!adminExists) {
       await User.create({
         firstName: 'Admin',
         lastName: 'User',
-        email: 'admin',  // Changed from admin@animeyou.com
-        password: 'admin', // Changed from Admin123!
+        email: 'admin',
+        password: 'admin',
         role: 'admin'
       });
       console.log('Admin user created');
+    } else {
+      console.log('Admin user already exists');
     }
 
   } catch (error) {
     console.error('Error creating admin user:', error);
   }
 };
+
 
 createAdminUser();
 
