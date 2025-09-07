@@ -1,0 +1,194 @@
+/* src/components/Navbar.css */
+/* Base navbar styling */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background-color: white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  border-bottom: 4px solid #e11d48;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+/* Logo styling */
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: 55px;
+  overflow: hidden;
+}
+
+.logo img {
+  padding-left: 5px;
+  height: 85px;
+  object-fit: contain;
+}
+
+/* Navigation links */
+.nav-links {
+  display: flex;
+  gap: 2rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 1.1rem;
+}
+
+.nav-links li {
+  cursor: pointer;
+  position: relative;
+  padding: 1rem 0;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: #333;
+  font-weight: 500;
+  font-size: 1.1rem;
+}
+
+.nav-links a:hover {
+  color: #e11d48;
+}
+
+/* Dropdown menu styling */
+.dropdown-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background-color: white;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+  min-width: 200px;
+  z-index: 1001;
+  border-radius: 4px;
+  padding: 0.5rem 0;
+  list-style: none;
+}
+
+.nav-links li:hover .dropdown-menu {
+  display: block;
+}
+
+.dropdown-menu li {
+  padding: 0;
+}
+
+.dropdown-menu a {
+  display: block;
+  padding: 0.7rem 1rem;
+  color: #333;
+  transition: background-color 0.2s;
+  font-size: 1rem;
+}
+
+.dropdown-menu a:hover {
+  background-color: #f8f8f8;
+  color: #e11d48;
+}
+
+/* Icons in navbar */
+.navbar-icons {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.nav-icon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-decoration: none;
+  color: #333;
+  transition: color 0.3s ease;
+}
+
+.nav-icon:hover {
+  color: #e11d48;
+}
+
+.nav-icon span {
+  font-size: 0.8rem;
+  margin-top: 0.2rem;
+  font-size: 0.9rem;
+}
+
+.admin-icon {
+  color: #4a6ee0;
+}
+
+/* Sign-in button styling */
+.sign-in-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #e11d48;
+  background-image: linear-gradient(to right, #e11d48 0%, #fa7878 100%);
+  color: white;
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  margin-top: 0px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.sign-in-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  background-image: linear-gradient(to right, #d71a42 0%, #f86b6b 100%);
+}
+
+.sign-in-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.sign-in-button svg {
+  margin-right: 8px;
+  font-size: 16px;
+}
+
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .navbar {
+    padding: 0.5rem;
+    flex-wrap: wrap;
+  }
+  
+  .nav-links {
+    order: 3;
+    width: 100%;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+  }
+  
+  .nav-links.open {
+    max-height: 500px;
+  }
+  
+  .dropdown-menu {
+    position: static;
+    box-shadow: none;
+    padding-left: 1rem;
+  }
+  
+  .navbar-icons {
+    gap: 1rem;
+  }
+  
+  .sign-in-button {
+    padding: 8px 16px;
+  }
+}
