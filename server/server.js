@@ -3,6 +3,7 @@ const dotenv = require('dotenv');
 const connectDB = require('./config/db');
 const cors = require('cors');
 const cloudinary = require('cloudinary').v2;
+const path = require('path'); // <-- Add this
 const adminRoutes = require('./routes/adminRoutes');
 const authRoutes = require('./routes/authRoutes');
 const User = require('./models/User');
@@ -73,6 +74,18 @@ const createAdminUser = async () => {
 };
 
 createAdminUser();
+
+
+// ---------- SERVE REACT BUILD IN PRODUCTION ----------
+if (process.env.NODE_ENV === 'production') {
+  // Serve static files from the React app
+  app.use(express.static(path.join(__dirname, '../build')));
+
+  // Handle React routing, return all requests to React app
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../build', 'index.html'));
+  });
+}
 
 // Start server
 const PORT = process.env.PORT || 5000;
