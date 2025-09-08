@@ -29,7 +29,7 @@ app.use(express.json());
 
 ;// Enable CORS
 app.use(cors({
-  origin: ['https://bookstore-0hqj.onrender.com', 'http://localhost:3000']
+  origin: ['https://book-store-azure-chi.vercel.app', 'http://localhost:3000']
 }))
 
 // Middleware
