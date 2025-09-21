@@ -129,7 +129,9 @@ export const UserProvider = ({ children }) => {
       hasRole,
       isAdmin,
       isUser,
-      isGuest: isGuest() // Call the function here to return a boolean instead of the function reference
+      isGuest
+      //isGuest: isGuest() // Call the function here to return a boolean instead of the function reference
+
     }}>
       {children}
     </UserContext.Provider>
