@@ -191,7 +191,7 @@ const UserManagement = () => {
             </div>
             <div className="modal-body">
               <p><strong>ID:</strong> {selectedUser._id}</p>
-              <p><strong>Name:</strong> {selectedUser.name}</p>
+              <p><strong>Name:</strong> {selectedUser.firstname}</p>
               <p><strong>Email:</strong> {selectedUser.email}</p>
               <p><strong>Role:</strong> {selectedUser.isAdmin ? 'Admin' : 'User'}</p>
               <p><strong>Created At:</strong> {new Date(selectedUser.createdAt).toLocaleString()}</p>
