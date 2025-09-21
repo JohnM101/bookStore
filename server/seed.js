@@ -15,7 +15,6 @@ const productData = {
       description: "Extended mouse pad featuring Nagi from Blue Lock.",
       category: "desktop",
       subcategory: "mousepad",
-      inStock: true,
       rating: 4.5,
       countInStock: 25
     },
@@ -28,7 +27,6 @@ const productData = {
       description: "LED desk lamp with My Hero Academia theme. Three brightness settings and USB port.",
       category: "desktop",
       subcategory: "mousepad",
-      inStock: true,
       rating: 4.6,
       countInStock: 25
     },
@@ -41,7 +39,6 @@ const productData = {
       description: "RGB mechanical keyboard with anime-themed keycaps. Blue switches for tactile feedback.",
       category: "desktop",
       subcategory: "mousepad",
-      inStock: true,
       rating: 4.8,
       countInStock: 25
     }
