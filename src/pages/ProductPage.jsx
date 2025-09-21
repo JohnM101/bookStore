@@ -1,3 +1,4 @@
+// ProductPage.jsx
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import './categories.css';
@@ -23,7 +24,7 @@ const ProductPage = () => {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { isGuest } = useUser();
+  const { user, isGuest } = useUser(); // Get user object from context
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -72,6 +73,11 @@ const ProductPage = () => {
   const confirmAddToCart = () => {
     if (typeof addToCart === 'function') {
       addToCart(product, quantity);
+      console.log('Adding to cart: ', {
+        userID: user ? user.id : 'Guest',
+        productID: productId,
+        quantity,
+      });
       setShowQuantityPrompt(false);
       setShowConfirmation(true);
       setTimeout(() => {
@@ -151,6 +157,13 @@ const ProductPage = () => {
                 <div className="disclaimer-overlay">
                   <div className="disclaimer-box">
                     <h6 className="disclaimer-header">Select Quantity</h6>
+
+                    {/* Display IDs */}
+                    {!isGuest && user && (
+                      <p>User ID: <strong>{user.id}</strong></p>
+                    )}
+                    <p>Product ID: <strong>{productId}</strong></p>
+
                     <input
                       type="number"
                       min="1"
