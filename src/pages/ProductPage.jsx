@@ -102,7 +102,7 @@ const ProductPage = () => {
             <div className="product-meta">
               <p>Category: <span>{product.category}</span></p>
               <p>
-                In Stock: <span>{product.countInStock > 0 ? `${product.countInStock} item(s)` : "Out of Stock"}</span>
+                Stock: <span>{product.countInStock > 0 ? `${product.countInStock}` : "Out of Stock"}</span>
               </p>
               {product.countInStock > 0 && product.countInStock < 4 && (
                 <p className="stock-warning">Only {product.countInStock} left — order soon!</p>
