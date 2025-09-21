@@ -133,7 +133,7 @@ const UserManagement = () => {
             {users.length > 0 ? (
               users.map((user) => (
                 <tr key={user._id}>
-                  <td>{user.name}</td>
+                  <td>{user.firstname}</td>
                   <td>{user.email}</td>
                   <td>{user.isAdmin ? 'Admin' : 'User'}</td>
                   <td>{new Date(user.createdAt).toLocaleDateString()}</td>
