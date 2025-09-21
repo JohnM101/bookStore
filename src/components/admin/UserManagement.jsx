@@ -133,7 +133,7 @@ const UserManagement = () => {
             {users.length > 0 ? (
               users.map((user) => (
                 <tr key={user._id}>
-                  <td>{user.firstname}</td>
+                  <td>{[user.firstName, user.lastName].filter(Boolean).join(' ')}</td>
                   <td>{user.email}</td>
                   <td>{user.isAdmin ? 'Admin' : 'User'}</td>
                   <td>{new Date(user.createdAt).toLocaleDateString()}</td>
@@ -191,7 +191,7 @@ const UserManagement = () => {
             </div>
             <div className="modal-body">
               <p><strong>ID:</strong> {selectedUser._id}</p>
-              <p><strong>Name:</strong> {selectedUser.firstname}</p>
+              <p><strong>Name:</strong> {[selectedUser.firstName, selectedUser.lastName].filter(Boolean).join(' ')}</p>
               <p><strong>Email:</strong> {selectedUser.email}</p>
               <p><strong>Role:</strong> {selectedUser.isAdmin ? 'Admin' : 'User'}</p>
               <p><strong>Created At:</strong> {new Date(selectedUser.createdAt).toLocaleString()}</p>
