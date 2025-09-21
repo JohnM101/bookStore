@@ -105,7 +105,7 @@ const ProductPage = () => {
             
             <div className="product-meta">
               <p>Category: <span>{product.category}</span></p>
-              <p>In Stock: <span>{product.inStock ? "Yes" : "No"}</span></p>
+              <p>Stock: <span>{product.CountinStock}</span></p>
             </div>
             
             <div className="product-actions">
