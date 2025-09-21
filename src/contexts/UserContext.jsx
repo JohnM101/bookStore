@@ -16,56 +16,48 @@ export const UserProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
-  // Updated login function that handles both cases
   const login = async (emailOrUserData, password) => {
-    // Case 1: If a user object is passed directly (e.g., for admin bypass or registration)
+    // Case 1: admin bypass or direct object login
     if (typeof emailOrUserData === 'object' && emailOrUserData !== null) {
-      const userData = emailOrUserData;
+      const userData = {
+        ...emailOrUserData,
+        _id: emailOrUserData._id || 'guest-001', // ensure _id exists
+        isLoggedIn: true,
+        isGuest: false,
+        registrationDate: emailOrUserData.registrationDate || new Date().toISOString()
+      };
       setUser(userData);
       localStorage.setItem('user', JSON.stringify(userData));
-      // Store token separately if provided
-      if (userData.token) {
-        localStorage.setItem('token', userData.token);
-      }
+      if (userData.token) localStorage.setItem('token', userData.token);
       return true;
     }
-    
-    // Case 2: If email and password are provided, authenticate with the server
+
+    // Case 2: normal login with email & password
     try {
       const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://bookstore-0hqj.onrender.com';
       const response = await fetch(`${API_URL}/api/auth/login`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          email: emailOrUserData, 
-          password 
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: emailOrUserData, password })
       });
 
-      if (!response.ok) {
-        throw new Error('Login failed');
-      }
+      if (!response.ok) throw new Error('Login failed');
 
       const data = await response.json();
-      
-      // Create a comprehensive user object with all fields from the API
+
+      // Backend returns user fields directly (_id, firstName, email, etc.)
       const userData = {
-        ...data.user, // Include all user data from response
-        _id: data.user._id, // <-- This ensures userID is stored
+        ...data,
+        _id: data._id,
         isLoggedIn: true,
-        token: data.token // Make sure token is included
+        isGuest: false,
+        registrationDate: data.createdAt || new Date().toISOString()
       };
-      
+
       setUser(userData);
       localStorage.setItem('user', JSON.stringify(userData));
-      
-      // Store token separately if needed
-      if (data.token) {
-        localStorage.setItem('token', data.token);
-      }
-      
+      if (data.token) localStorage.setItem('token', data.token);
+
       return true;
     } catch (error) {
       console.error('Login error:', error);
@@ -75,67 +67,50 @@ export const UserProvider = ({ children }) => {
 
   const continueAsGuest = () => {
     const guestData = {
+      _id: 'guest-001',
       isGuest: true,
+      isLoggedIn: false,
       role: 'guest',
       name: 'Guest',
-      coupons: 0,
-      reviews: 0
+      registrationDate: new Date().toISOString()
     };
     setUser(guestData);
     localStorage.setItem('user', JSON.stringify(guestData));
   };
 
-  // Logout function
   const logout = () => {
     setUser(null);
     localStorage.removeItem('user');
     localStorage.removeItem('token');
   };
 
-  // Update user data
   const updateUser = (newData) => {
     const updatedUser = { ...user, ...newData };
     setUser(updatedUser);
     localStorage.setItem('user', JSON.stringify(updatedUser));
   };
 
-  // Check if user has specific role
   const hasRole = (role) => {
     if (!user) return false;
-    if (Array.isArray(role)) {
-      return role.includes(user.role);
-    }
-    return user.role === role;
+    return Array.isArray(role) ? role.includes(user.role) : user.role === role;
   };
 
-  // Check if user is admin
-  const isAdmin = () => hasRole('admin');
-  
-  // Check if user is a regular user
-  const isUser = () => hasRole('user');
-  
-  // Check if user is a guest
-  const isGuest = () => hasRole('guest') || !user;
-
   return (
-    <UserContext.Provider value={{ 
-      user, 
-      login, 
-      logout, 
-      updateUser, 
-      setUser, 
-      loading,
-      continueAsGuest,
-      hasRole,
-      isAdmin,
-      isUser,
-      isGuest: isGuest() // Call the function here to return a boolean instead of the function reference
-      
-    }}>
+    <UserContext.Provider
+      value={{
+        user,
+        login,
+        logout,
+        updateUser,
+        setUser,
+        loading,
+        continueAsGuest,
+        hasRole
+      }}
+    >
       {children}
     </UserContext.Provider>
   );
 };
 
-// Custom hook to use the UserContext
 export const useUser = () => useContext(UserContext);
