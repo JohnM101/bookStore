@@ -71,11 +71,10 @@ const Profile = () => {
                {/* Conditionally render user details if user is logged in  */}
                {user && (
                 <div>
-                    <p>User ID: {user._id}</p>
+                    <p>User ID: {user._id || user.id}</p>
                     <p>Email: {user.email}</p>
                     <p>Phone: {user.phone || user.phoneNumber || user.address?.telephone || 'Not provided'}</p>
                     <p>Registration Date: {user.registrationDate}</p>
-                    {/* Add more user details as needed */}
                 </div>
                 )}
                 <div className="order-section">
