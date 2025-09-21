@@ -16,7 +16,8 @@ const productData = {
       category: "desktop",
       subcategory: "mousepad",
       inStock: true,
-      rating: 4.5
+      rating: 4.5,
+      countInStock: 25
     },
     {
       id: "desk-002",
@@ -28,7 +29,8 @@ const productData = {
       category: "desktop",
       subcategory: "mousepad",
       inStock: true,
-      rating: 4.6
+      rating: 4.6,
+      countInStock: 25
     },
     {
       id: "desk-003",
@@ -40,7 +42,8 @@ const productData = {
       category: "desktop",
       subcategory: "mousepad",
       inStock: true,
-      rating: 4.8
+      rating: 4.8,
+      countInStock: 25
     }
   ],
 

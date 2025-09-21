@@ -100,7 +100,8 @@ router.put('/products/:id', protect, admin, upload.single('image'), async (req, 
       price: req.body.price,
       category: req.body.category,
       subcategory: req.body.subcategory,
-      countInStock: req.body.countInStock
+      //countInStock: req.body.countInStock
+      countInStock: Number(req.body.countInStock)
     };
 
     if (req.file) {

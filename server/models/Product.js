@@ -9,10 +9,11 @@ const productSchema = new mongoose.Schema({
   description: { type: String, required: true },
   category: { type: String, required: true },
   subcategory: { type: String, required: true },
-  CountInStock: { type: Number, required: true },
   inStock: { type: Boolean, default: true },
   rating: { type: Number },
+  countInStock: { type: Number, required: true, default: 0 }, // <-- ADD THIS
   sizes: [String] // For clothing items
 });
+
 
 module.exports = mongoose.model('Product', productSchema);

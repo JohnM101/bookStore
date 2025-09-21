@@ -358,7 +358,7 @@ const ProductManagement = () => {
               name="countInStock"
               value={formData.countInStock}
               onChange={handleInputChange}
-              required
+              requiredd
             />
           </div>
           
@@ -386,6 +386,7 @@ const ProductManagement = () => {
                 <th>Category</th>
                 <th>Subcategory</th>
                 <th>Price</th>
+                <th>Stock</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -404,6 +405,7 @@ const ProductManagement = () => {
                     <td>{product.category}</td>
                     <td>{product.subcategory}</td>
                     <td>₱{product.price.toFixed(2)}</td>
+                    <td>{product.countInStock}</td>
                     <td className="actions">
                       <button 
                         className="btn-edit" 
