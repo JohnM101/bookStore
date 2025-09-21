@@ -153,33 +153,34 @@ const ProductPage = () => {
 
               {/* Quantity Prompt Modal */}
               {showQuantityPrompt && (
-                <div className="disclaimer-overlay">
-                  <div className="disclaimer-box">
-                    <h6 className="disclaimer-header">Select Quantity</h6>
+              <div className="disclaimer-overlay">
+                <div className="disclaimer-box">
+                  <h6 className="disclaimer-header">Select Quantity</h6>
 
-                    {/* Display logged-in user ID and product ID */}
-                    {!isGuest && user && user.id ? (
-                      <p>User ID: <strong>{user.id}</strong></p>
-                    ) : (
-                      <p>User ID: <strong>Guest</strong></p>
-                    )}
-                    <p>Product ID: <strong>{productId}</strong></p>
+                  {/* Display logged-in user ID and product ID */}
+                  {!isGuest && user ? (
+                    <p>User ID: <strong>{user._id}</strong></p>
+                  ) : (
+                    <p>User ID: <strong>Guest</strong></p>
+                  )}
+                  <p>Product ID: <strong>{productId}</strong></p>
 
-                    <input
-                      type="number"
-                      min="1"
-                      max={product.countInStock}
-                      value={quantity}
-                      onChange={(e) => setQuantity(Number(e.target.value))}
-                      className="quantity-input"
-                    />
-                    <div className="modal-buttons">
-                      <button className="disclaimer-button cancel" onClick={() => setShowQuantityPrompt(false)}>Cancel</button>
-                      <button className="disclaimer-button" onClick={confirmAddToCart}>Confirm</button>
-                    </div>
+                  <input
+                    type="number"
+                    min="1"
+                    max={product.countInStock}
+                    value={quantity}
+                    onChange={(e) => setQuantity(Number(e.target.value))}
+                    className="quantity-input"
+                  />
+                  <div className="modal-buttons">
+                    <button className="disclaimer-button cancel" onClick={() => setShowQuantityPrompt(false)}>Cancel</button>
+                    <button className="disclaimer-button" onClick={confirmAddToCart}>Confirm</button>
                   </div>
                 </div>
-              )}
+              </div>
+            )}
+
 
               {/* Confirmation Modal */}
               {showConfirmation && (
