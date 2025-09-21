@@ -53,6 +53,7 @@ export const UserProvider = ({ children }) => {
       // Create a comprehensive user object with all fields from the API
       const userData = {
         ...data.user, // Include all user data from response
+        id: data.user._id,
         isLoggedIn: true,
         token: data.token // Make sure token is included
       };
