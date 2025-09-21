@@ -18,6 +18,8 @@ const ProductPage = () => {
   const navigate = useNavigate();
   const { addToCart } = useCart();
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [showQuantityPrompt, setShowQuantityPrompt] = useState(false);
+  const [quantity, setQuantity] = useState(1);
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -62,9 +64,15 @@ const ProductPage = () => {
 
   const imagePath = normalizeImagePath(product.image);
 
-  const handleAddToCart = () => {
+  const handleAddToCartClick = () => {
+    setQuantity(1); // reset default quantity
+    setShowQuantityPrompt(true);
+  };
+
+  const confirmAddToCart = () => {
     if (typeof addToCart === 'function') {
-      addToCart(product, 1);
+      addToCart(product, quantity);
+      setShowQuantityPrompt(false);
       setShowConfirmation(true);
       setTimeout(() => {
         setShowConfirmation(false);
@@ -125,7 +133,7 @@ const ProductPage = () => {
                 </div>
               ) : (
                 product.countInStock > 0 ? (
-                  <button className="add-to-cart-btn" onClick={handleAddToCart}>
+                  <button className="add-to-cart-btn" onClick={handleAddToCartClick}>
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
                       <circle cx="9" cy="21" r="1" />
                       <circle cx="20" cy="21" r="1" />
@@ -138,12 +146,34 @@ const ProductPage = () => {
                 )
               )}
 
+              {/* Quantity Prompt Modal */}
+              {showQuantityPrompt && (
+                <div className="disclaimer-overlay">
+                  <div className="disclaimer-box">
+                    <h6 className="disclaimer-header">Select Quantity</h6>
+                    <input
+                      type="number"
+                      min="1"
+                      max={product.countInStock}
+                      value={quantity}
+                      onChange={(e) => setQuantity(Number(e.target.value))}
+                      className="quantity-input"
+                    />
+                    <div className="modal-buttons">
+                      <button className="disclaimer-button cancel" onClick={() => setShowQuantityPrompt(false)}>Cancel</button>
+                      <button className="disclaimer-button" onClick={confirmAddToCart}>Confirm</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Confirmation Modal */}
               {showConfirmation && (
                 <div className="disclaimer-overlay">
                   <div className="disclaimer-box">
                     <img src="/assets/logo.png" alt="Logo" className="disclaimer-logo" />
                     <h6 className="disclaimer-header">Success!</h6>
-                    <p className="disclaimer-text">{product.name} has been added to your cart.</p>
+                    <p className="disclaimer-text">{product.name} (x{quantity}) has been added to your cart.</p>
                     <button className="disclaimer-button" onClick={() => setShowConfirmation(false)}>Continue Shopping</button>
                   </div>
                 </div>
