@@ -26,6 +26,12 @@ const ProductPage = () => {
   const [error, setError] = useState(null);
   const { user, isGuest } = useUser(); // extract user object
 
+  console.log('Adding to cart:', {
+  userID: isGuest ? 'Guest' : user.id,
+  productID: productId,
+  quantity,
+});
+
   useEffect(() => {
     const fetchProduct = async () => {
       try {
