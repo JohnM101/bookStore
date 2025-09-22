@@ -9,14 +9,13 @@ const Cart = () => {
   const navigate = useNavigate();
   const { cart, removeFromCart, updateQuantity } = useCart();
   
-  // New state to track checked items
-  const [checkedItems, setCheckedItems] = useState(
-    cart.reduce((acc, item) => {
-      acc[item.id] = true;
-      return acc;
-    }, {})
-  );
-
+  // When calculating checkedItems initially
+const [checkedItems, setCheckedItems] = useState(
+  cart.reduce((acc, item) => {
+    acc[item.id] = true; // ensure `item.id` matches the mapped backend productId
+    return acc;
+  }, {})
+);
   useEffect(() => {
     setCheckedItems(prev => {
       const updated = {...prev};
