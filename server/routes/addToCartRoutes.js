@@ -3,66 +3,48 @@ const router = express.Router();
 const AddToCart = require('../models/addToCart');
 const { protect } = require('../middleware/authMiddleware');
 
-// Add to cart
+// Add or update quantity
 router.post('/', protect, async (req, res) => {
   try {
     const { productId, quantity } = req.body;
+    if (!productId || !quantity) return res.status(400).json({ message: 'Product ID and quantity required' });
 
-    if (!productId || !quantity) {
-      return res.status(400).json({ message: 'Product ID and quantity are required' });
+    let cartItem = await AddToCart.findOne({ userId: req.user._id, productId });
+
+    if (cartItem) {
+      cartItem.quantity = quantity;
+      await cartItem.save();
+      return res.status(200).json(cartItem);
     }
 
-    // Check if product already exists in cart
-    const existingItem = await AddToCart.findOne({ userId: req.user._id, productId });
-
-    if (existingItem) {
-      existingItem.quantity += quantity;
-      await existingItem.save();
-      return res.status(200).json(existingItem);
-    }
-
-    const newCartItem = await AddToCart.create({
-      userId: req.user._id,
-      productId,
-      quantity,
-    });
-
-    res.status(201).json(newCartItem);
-  } catch (error) {
-    console.error('Error adding to cart:', error);
+    cartItem = await AddToCart.create({ userId: req.user._id, productId, quantity });
+    res.status(201).json(cartItem);
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
-// Get user’s cart
+// Get cart
 router.get('/', protect, async (req, res) => {
   try {
-    const cart = await AddToCart.find({ userId: req.user._id })
-      .populate('productId');
+    const cart = await AddToCart.find({ userId: req.user._id }).populate('productId');
     res.json(cart);
-  } catch (error) {
-    console.error('Error fetching cart:', error);
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
-// Remove item from cart
-router.delete('/:id', protect, async (req, res) => {
+// Delete item
+router.delete('/:productId', protect, async (req, res) => {
   try {
-    const cartItem = await AddToCart.findById(req.params.id);
-
-    if (!cartItem) {
-      return res.status(404).json({ message: 'Cart item not found' });
-    }
-
-    if (cartItem.userId.toString() !== req.user._id.toString()) {
-      return res.status(401).json({ message: 'Not authorized' });
-    }
-
+    const cartItem = await AddToCart.findOne({ userId: req.user._id, productId: req.params.productId });
+    if (!cartItem) return res.status(404).json({ message: 'Cart item not found' });
     await cartItem.remove();
-    res.json({ message: 'Item removed from cart' });
-  } catch (error) {
-    console.error('Error removing from cart:', error);
+    res.json({ message: 'Item removed' });
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ message: 'Server error' });
   }
 });
