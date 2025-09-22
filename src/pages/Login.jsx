@@ -46,7 +46,6 @@ const Login = () => {
         if (email === 'admin' && password === 'admin') {
             // Create admin user data directly without backend check
             const adminData = {
-                _id: 'admin-001', 
                 firstName: 'Admin',
                 lastName: 'User',
                 email: 'admin',
@@ -92,7 +91,6 @@ const Login = () => {
                 // Create a comprehensive user object with all fields from the API response
                 const userData = {
                     ...data.user, // Include all user data from the API response
-                    _id: data._id,  // ensure _id is included
                     isLoggedIn: true,
                     isGuest: false,
                     role: data.user?.role || 'user',

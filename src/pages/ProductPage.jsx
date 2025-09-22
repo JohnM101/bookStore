@@ -1,4 +1,3 @@
-// ProductPage.jsx
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import './categories.css';
@@ -24,13 +23,7 @@ const ProductPage = () => {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { user, isGuest } = useUser(); // extract user object
-
-  console.log('Adding to cart:', {
-  userID: isGuest ? 'Guest' : user.id,
-  productID: productId,
-  quantity,
-});
+  const { isGuest } = useUser();
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -79,14 +72,6 @@ const ProductPage = () => {
   const confirmAddToCart = () => {
     if (typeof addToCart === 'function') {
       addToCart(product, quantity);
-
-      // Debug: log userID, productID, quantity
-      console.log('Adding to cart:', {
-        userID: user && user.id ? user.id : 'Guest',
-        productID: productId,
-        quantity,
-      });
-
       setShowQuantityPrompt(false);
       setShowConfirmation(true);
       setTimeout(() => {
@@ -109,7 +94,7 @@ const ProductPage = () => {
               className="product-detail-image"
               onError={(e) => {
                 console.error("Failed to load image:", imagePath);
-                e.target.src = "/assets/placeholder.jpg"; // fallback image
+                e.target.src = "/assets/placeholder.jpg"; // Fallback image
               }}
             />
           </div>
@@ -138,12 +123,22 @@ const ProductPage = () => {
                 <div className="guest-message">
                   <p>Please sign in to add items to your cart</p>
                   <Link to="/" className="sign-in-button">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" style={{ marginRight: '8px' }}>
+                      <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                      <polyline points="10 17 15 12 10 7" />
+                      <line x1="15" y1="12" x2="3" y2="12" />
+                    </svg>
                     Sign In
                   </Link>
                 </div>
               ) : (
                 product.countInStock > 0 ? (
                   <button className="add-to-cart-btn" onClick={handleAddToCartClick}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                      <circle cx="9" cy="21" r="1" />
+                      <circle cx="20" cy="21" r="1" />
+                      <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+                    </svg>
                     Add to Cart
                   </button>
                 ) : (
@@ -153,39 +148,30 @@ const ProductPage = () => {
 
               {/* Quantity Prompt Modal */}
               {showQuantityPrompt && (
-              <div className="disclaimer-overlay">
-                <div className="disclaimer-box">
-                  <h6 className="disclaimer-header">Select Quantity</h6>
-
-                  {/* Display logged-in user ID and product ID */}
-                  {!isGuest && user ? (
-                    <p>User ID: <strong>{user._id}</strong></p>
-                  ) : (
-                    <p>User ID: <strong>Guest</strong></p>
-                  )}
-                  <p>Product ID: <strong>{productId}</strong></p>
-
-                  <input
-                    type="number"
-                    min="1"
-                    max={product.countInStock}
-                    value={quantity}
-                    onChange={(e) => setQuantity(Number(e.target.value))}
-                    className="quantity-input"
-                  />
-                  <div className="modal-buttons">
-                    <button className="disclaimer-button cancel" onClick={() => setShowQuantityPrompt(false)}>Cancel</button>
-                    <button className="disclaimer-button" onClick={confirmAddToCart}>Confirm</button>
+                <div className="disclaimer-overlay">
+                  <div className="disclaimer-box">
+                    <h6 className="disclaimer-header">Select Quantity</h6>
+                    <input
+                      type="number"
+                      min="1"
+                      max={product.countInStock}
+                      value={quantity}
+                      onChange={(e) => setQuantity(Number(e.target.value))}
+                      className="quantity-input"
+                    />
+                    <div className="modal-buttons">
+                      <button className="disclaimer-button cancel" onClick={() => setShowQuantityPrompt(false)}>Cancel</button>
+                      <button className="disclaimer-button" onClick={confirmAddToCart}>Confirm</button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-
+              )}
 
               {/* Confirmation Modal */}
               {showConfirmation && (
                 <div className="disclaimer-overlay">
                   <div className="disclaimer-box">
+                    <img src="/assets/logo.png" alt="Logo" className="disclaimer-logo" />
                     <h6 className="disclaimer-header">Success!</h6>
                     <p className="disclaimer-text">{product.name} (x{quantity}) has been added to your cart.</p>
                     <button className="disclaimer-button" onClick={() => setShowConfirmation(false)}>Continue Shopping</button>
@@ -196,7 +182,7 @@ const ProductPage = () => {
           </div>
         </div>
 
-        {/* Related Products Section */}
+        {/* Related Products Section (Placeholder) */}
         <h2 className="section-heading">You May Also Like</h2>
         <div className="product-grid">
           {/* Related products go here */}
