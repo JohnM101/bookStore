@@ -1,108 +1,161 @@
-const express = require('express');
-const router = express.Router();
-const AddToCart = require('../models/addToCart');
-const Product = require('../models/Product'); // Make sure to import Product model
-const { protect } = require('../middleware/authMiddleware');
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useUser } from './UserContext';
 
-// ------------------------
-// POST /api/cart
-// Add product to cart (increment if exists)
-// ------------------------
-router.post('/', protect, async (req, res) => {
-  try {
-    const { productId, quantity } = req.body;
-    if (!productId || !quantity)
-      return res.status(400).json({ message: 'Product ID and quantity required' });
+export const CartContext = createContext();
 
-    const product = await Product.findById(productId);
-    if (!product) return res.status(404).json({ message: 'Product not found' });
+export const CartProvider = ({ children }) => {
+  const [cart, setCart] = useState([]);
+  const { user, isGuest } = useUser();
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://bookstore-0hqj.onrender.com';
+  const token = localStorage.getItem('token');
 
-    let cartItem = await AddToCart.findOne({ userId: req.user._id, productId });
+  // Fetch cart on page load or user change
+  useEffect(() => {
+    const fetchCart = async () => {
+      if (!isGuest && user?._id) {
+        try {
+          const res = await fetch(`${API_URL}/api/cart`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (!res.ok) throw new Error('Failed to fetch cart');
+          const data = await res.json();
+          const mappedCart = data
+            .filter(item => item.productId)
+            .map(item => ({
+              _id: item._id,
+              id: item.productId._id,
+              name: item.productId.name,
+              price: item.productId.price,
+              image: item.productId.image,
+              quantity: item.quantity,
+            }));
+          setCart(mappedCart);
+        } catch (err) {
+          console.error('Error fetching cart:', err);
+        }
+      }
+    };
+    fetchCart();
+  }, [user, isGuest]);
 
-    if (cartItem) {
-      // Increment existing quantity, but don't exceed stock
-      cartItem.quantity = Math.min(cartItem.quantity + quantity, product.countInStock);
-      await cartItem.save();
-      return res.status(200).json(cartItem);
+  // -------------------------------
+  // Add to Cart (ProductPage)
+  // -------------------------------
+  const addToCart = async (product, quantity) => {
+    if (!isGuest && user?._id) {
+      try {
+        const res = await fetch(`${API_URL}/api/cart`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ productId: product._id, quantity }),
+        });
+        if (!res.ok) throw new Error('Failed to add to cart');
+
+        // Refetch cart to get updated quantities
+        const cartRes = await fetch(`${API_URL}/api/cart`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const cartData = await cartRes.json();
+        const mappedCart = cartData
+          .filter(item => item.productId)
+          .map(item => ({
+            _id: item._id,
+            id: item.productId._id,
+            name: item.productId.name,
+            price: item.productId.price,
+            image: item.productId.image,
+            quantity: item.quantity,
+          }));
+        setCart(mappedCart);
+      } catch (err) {
+        console.error('Failed to add to backend cart:', err);
+      }
+    } else {
+      // Guest user: just update local state
+      setCart(prev => {
+        const existing = prev.find(item => item.id === product._id);
+        if (existing) {
+          return prev.map(item =>
+            item.id === product._id
+              ? { ...item, quantity: Math.min(item.quantity + quantity, product.countInStock) }
+              : item
+          );
+        }
+        return [...prev, { ...product, id: product._id, quantity }];
+      });
+    }
+  };
+
+  // -------------------------------
+  // Update quantity (Cart increment/decrement)
+  // -------------------------------
+  const updateQuantity = async (productId, newQuantity) => {
+    if (newQuantity <= 0) {
+      removeFromCart(productId);
+      return;
     }
 
-    // Create new cart item
-    cartItem = await AddToCart.create({
-      userId: req.user._id,
-      productId,
-      quantity: Math.min(quantity, product.countInStock),
-    });
+    if (!isGuest && user?._id) {
+      try {
+        const res = await fetch(`${API_URL}/api/cart/${productId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ quantity: newQuantity }),
+        });
+        if (!res.ok) throw new Error('Failed to update cart quantity');
 
-    res.status(201).json(cartItem);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
+        // Refetch cart
+        const cartRes = await fetch(`${API_URL}/api/cart`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const cartData = await cartRes.json();
+        const mappedCart = cartData
+          .filter(item => item.productId)
+          .map(item => ({
+            _id: item._id,
+            id: item.productId._id,
+            name: item.productId.name,
+            price: item.productId.price,
+            image: item.productId.image,
+            quantity: item.quantity,
+          }));
+        setCart(mappedCart);
+      } catch (err) {
+        console.error('Error updating cart quantity:', err);
+      }
+    } else {
+      // Guest: just update local state
+      setCart(prev =>
+        prev.map(item => (item.id === productId ? { ...item, quantity: newQuantity } : item))
+      );
+    }
+  };
 
-// ------------------------
-// PUT /api/cart/:productId
-// Set exact quantity for an existing cart item
-// ------------------------
-router.put('/:productId', protect, async (req, res) => {
-  try {
-    const { quantity } = req.body;
-    if (quantity === undefined)
-      return res.status(400).json({ message: 'Quantity required' });
+  // -------------------------------
+  // Remove item from cart
+  // -------------------------------
+  const removeFromCart = async (productId) => {
+    setCart(prev => prev.filter(item => item.id !== productId));
 
-    const cartItem = await AddToCart.findOne({
-      userId: req.user._id,
-      productId: req.params.productId,
-    });
+    if (!isGuest && user?._id) {
+      try {
+        await fetch(`${API_URL}/api/cart/${productId}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      } catch (err) {
+        console.error('Failed to remove cart item from backend:', err);
+      }
+    }
+  };
 
-    if (!cartItem) return res.status(404).json({ message: 'Cart item not found' });
+  const clearCart = () => setCart([]);
 
-    const product = await Product.findById(req.params.productId);
-    if (!product) return res.status(404).json({ message: 'Product not found' });
+  return (
+    <CartContext.Provider value={{ cart, addToCart, updateQuantity, removeFromCart, clearCart }}>
+      {children}
+    </CartContext.Provider>
+  );
+};
 
-    // Set quantity but do not exceed stock
-    cartItem.quantity = Math.min(quantity, product.countInStock);
-    await cartItem.save();
-
-    res.status(200).json(cartItem);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
-
-// ------------------------
-// GET /api/cart
-// Get all cart items for current user
-// ------------------------
-router.get('/', protect, async (req, res) => {
-  try {
-    const cart = await AddToCart.find({ userId: req.user._id }).populate('productId');
-    res.json(cart);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
-
-// ------------------------
-// DELETE /api/cart/:productId
-// Remove cart item
-// ------------------------
-router.delete('/:productId', protect, async (req, res) => {
-  try {
-    const cartItem = await AddToCart.findOne({
-      userId: req.user._id,
-      productId: req.params.productId,
-    });
-    if (!cartItem) return res.status(404).json({ message: 'Cart item not found' });
-
-    await cartItem.remove();
-    res.json({ message: 'Item removed' });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
-
-module.exports = router;
+export const useCart = () => useContext(CartContext);
