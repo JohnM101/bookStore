@@ -71,7 +71,7 @@ const ProductPage = () => {
 
   const confirmAddToCart = () => {
     if (typeof addToCart === 'function') {
-      addToCart({ ...product, userId }, quantity); // attach userId if needed
+      addToCart(product, quantity);
       setShowQuantityPrompt(false);
       setShowConfirmation(true);
       setTimeout(() => {
