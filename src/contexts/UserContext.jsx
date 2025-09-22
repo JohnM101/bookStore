@@ -18,60 +18,47 @@ export const UserProvider = ({ children }) => {
 
   // Updated login function that handles both cases
   const login = async (emailOrUserData, password) => {
-    // Case 1: If a user object is passed directly (e.g., for admin bypass or registration)
-    if (typeof emailOrUserData === 'object' && emailOrUserData !== null) {
-      const userData = emailOrUserData;
-      setUser(userData);
-      localStorage.setItem('user', JSON.stringify(userData));
-      // Store token separately if provided
-      if (userData.token) {
-        localStorage.setItem('token', userData.token);
-      }
-      return true;
+  if (typeof emailOrUserData === 'object' && emailOrUserData !== null) {
+    const userData = {
+      ...emailOrUserData,
+      _id: emailOrUserData._id || emailOrUserData.id, // normalize here
+    };
+    setUser(userData);
+    localStorage.setItem('user', JSON.stringify(userData));
+    if (userData.token) {
+      localStorage.setItem('token', userData.token);
     }
-    
-    // Case 2: If email and password are provided, authenticate with the server
-    try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://bookstore-0hqj.onrender.com';
-      const response = await fetch(`${API_URL}/api/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          email: emailOrUserData, 
-          password 
-        }),
-      });
+    return true;
+  }
 
-      if (!response.ok) {
-        throw new Error('Login failed');
-      }
+  try {
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://bookstore-0hqj.onrender.com';
+    const response = await fetch(`${API_URL}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: emailOrUserData, password }),
+    });
 
-      const data = await response.json();
-      
-      // Create a comprehensive user object with all fields from the API
-      const userData = {
-        ...data.user, // Include all user data from response
-        _id: data.user._id, // <-- This ensures userID is stored
-        isLoggedIn: true,
-        token: data.token // Make sure token is included
-      };
-      
-      setUser(userData);
-      localStorage.setItem('user', JSON.stringify(userData));
-      
-      // Store token separately if needed
-      if (data.token) {
-        localStorage.setItem('token', data.token);
-      }
-      
-      return true;
-    } catch (error) {
-      console.error('Login error:', error);
-      return false;
-    }
-  };
+    if (!response.ok) throw new Error('Login failed');
+    const data = await response.json();
+
+    const userData = {
+      ...data.user,
+      _id: data.user?._id || data.user?.id, // normalize here
+      isLoggedIn: true,
+      token: data.token,
+    };
+
+    setUser(userData);
+    localStorage.setItem('user', JSON.stringify(userData));
+    if (data.token) localStorage.setItem('token', data.token);
+
+    return true;
+  } catch (error) {
+    console.error('Login error:', error);
+    return false;
+  }
+};
 
   const continueAsGuest = () => {
     const guestData = {
