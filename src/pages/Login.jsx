@@ -91,6 +91,7 @@ const Login = () => {
                 // Create a comprehensive user object with all fields from the API response
                 const userData = {
                     ...data.user, // Include all user data from the API response
+                    _id: data.user?._id || data.user?.id, // <-- Make sure _id is set
                     isLoggedIn: true,
                     isGuest: false,
                     role: data.user?.role || 'user',
