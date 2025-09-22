@@ -23,7 +23,8 @@ const ProductPage = () => {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { isGuest } = useUser();
+  const { user, isGuest } = useUser();
+  const userId = user?._id || user?.id || 'Guest';
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -64,6 +65,7 @@ const ProductPage = () => {
 
   const imagePath = normalizeImagePath(product.image);
 
+  
   const handleAddToCartClick = () => {
     setQuantity(1); // reset default quantity
     setShowQuantityPrompt(true);
@@ -72,6 +74,7 @@ const ProductPage = () => {
   const confirmAddToCart = () => {
     if (typeof addToCart === 'function') {
       addToCart(product, quantity);
+      addToCart({ ...product, userId }, quantity); // attach userId if needed
       setShowQuantityPrompt(false);
       setShowConfirmation(true);
       setTimeout(() => {
