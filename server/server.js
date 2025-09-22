@@ -43,6 +43,8 @@ app.use('/uploads', express.static('uploads'));
 // Routes
 app.use('/api/orders', require('./routes/orderRoutes'));
 app.use('/api/cart', require('./routes/cartRoutes'));
+
+app.use('/api/cart', require('./routes/addToCartRoutes'));
 app.use('/api/products', require('./routes/productRoutes'));
 app.use('/api/admin', adminRoutes);
 app.use('/api/auth', authRoutes);
