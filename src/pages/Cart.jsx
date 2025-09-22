@@ -1,3 +1,4 @@
+//cart.jsx
 import { Link, useNavigate } from 'react-router-dom';
 import React, { useState, useEffect } from 'react';
 import { FaShoppingBag } from 'react-icons/fa';

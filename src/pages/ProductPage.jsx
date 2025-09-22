@@ -4,12 +4,10 @@ import './categories.css';
 import { useCart } from '../contexts/CartContext';
 import { useUser } from '../contexts/UserContext';
 
-// Helper function to normalize image paths
+// Helper to normalize image paths
 const normalizeImagePath = (path) => {
   if (!path) return '';
-  if (path.startsWith('http://') || path.startsWith('https://')) {
-    return path;
-  }
+  if (path.startsWith('http://') || path.startsWith('https://')) return path;
   return path.startsWith('/') ? path : `/${path}`;
 };
 
@@ -17,77 +15,85 @@ const ProductPage = () => {
   const { productId } = useParams();
   const navigate = useNavigate();
   const { addToCart } = useCart();
-  const [showConfirmation, setShowConfirmation] = useState(false);
-  const [showQuantityPrompt, setShowQuantityPrompt] = useState(false);
-  const [quantity, setQuantity] = useState(1);
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [quantity, setQuantity] = useState(1);
+  const [showQuantityPrompt, setShowQuantityPrompt] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
   const { user, isGuest } = useUser();
-  const userId = user?._id || user?.id || 'Guest';
 
+  // Fetch product data
   useEffect(() => {
     const fetchProduct = async () => {
       try {
         const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://bookstore-0hqj.onrender.com';
-        const response = await fetch(`${API_URL}/api/products/${productId}`);
-
-        if (!response.ok) {
-          throw new Error('Product not found');
-        }
-
-        const data = await response.json();
+        const res = await fetch(`${API_URL}/api/products/${productId}`);
+        if (!res.ok) throw new Error('Product not found');
+        const data = await res.json();
         setProduct(data);
         setLoading(false);
-      } catch (error) {
-        console.error('Error fetching product:', error);
-        setError(error.message);
+      } catch (err) {
+        console.error(err);
+        setError(err.message);
         setLoading(false);
       }
     };
-
     fetchProduct();
   }, [productId]);
 
-  if (loading) {
-    return <div className="loading-container">Loading product details...</div>;
-  }
-
-  if (error || !product) {
+  if (loading) return <div className="loading-container">Loading product details...</div>;
+  if (error || !product)
     return (
       <div className="not-found-container">
         <h2>Product Not Found</h2>
-        <p>The product you're looking for doesn't exist or has been removed.</p>
+        <p>The product you're looking for doesn't exist.</p>
         <button onClick={() => navigate('/')}>Return to Homepage</button>
       </div>
     );
-  }
 
   const imagePath = normalizeImagePath(product.image);
 
-  
   const handleAddToCartClick = () => {
-    setQuantity(1); // reset default quantity
+    setQuantity(1);
     setShowQuantityPrompt(true);
   };
 
-  const confirmAddToCart = () => {
+  const confirmAddToCart = async () => {
     if (typeof addToCart === 'function') {
       addToCart(product, quantity);
-      addToCart({ ...product, userId }, quantity); // attach userId if needed
+
+      // Persist to backend if logged in
+      if (!isGuest && user && user._id) {
+        try {
+          const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://bookstore-0hqj.onrender.com';
+          const token = localStorage.getItem('token');
+          const res = await fetch(`${API_URL}/api/cart`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ productId, quantity }),
+          });
+          if (!res.ok) throw new Error('Failed to add to cart');
+          const data = await res.json();
+          console.log('Cart updated in DB:', data);
+        } catch (err) {
+          console.error('Error saving cart:', err);
+        }
+      }
+
       setShowQuantityPrompt(false);
       setShowConfirmation(true);
-      setTimeout(() => {
-        setShowConfirmation(false);
-      }, 3000);
+      setTimeout(() => setShowConfirmation(false), 3000);
     } else {
-      console.error("addToCart is not available or not a function");
+      console.error('addToCart is not available');
     }
   };
 
   return (
     <div className="app">
-      {/* Product Details Section */}
       <div className="product-section">
         <div className="product-detail-container">
           <div className="product-image-container">
@@ -95,10 +101,7 @@ const ProductPage = () => {
               src={imagePath}
               alt={product.name}
               className="product-detail-image"
-              onError={(e) => {
-                console.error("Failed to load image:", imagePath);
-                e.target.src = "/assets/placeholder.jpg"; // Fallback image
-              }}
+              onError={(e) => (e.target.src = '/assets/placeholder.jpg')}
             />
           </div>
 
@@ -113,71 +116,54 @@ const ProductPage = () => {
             <div className="product-meta">
               <p>Category: <span>{product.category}</span></p>
               <p>
-                Stock: <span>{product.countInStock > 0 ? `${product.countInStock}` : "Out of Stock"}</span>
+                Stock: <span>{product.countInStock > 0 ? product.countInStock : 'Out of Stock'}</span>
               </p>
               {product.countInStock > 0 && product.countInStock < 4 && (
                 <p className="stock-warning">Only {product.countInStock} left — order soon!</p>
               )}
             </div>
 
-            {/* Product Action Buttons */}
             <div className="product-actions">
               {isGuest ? (
                 <div className="guest-message">
                   <p>Please sign in to add items to your cart</p>
-                  <Link to="/" className="sign-in-button">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" style={{ marginRight: '8px' }}>
-                      <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
-                      <polyline points="10 17 15 12 10 7" />
-                      <line x1="15" y1="12" x2="3" y2="12" />
-                    </svg>
-                    Sign In
-                  </Link>
+                  <Link to="/" className="sign-in-button">Sign In</Link>
                 </div>
+              ) : product.countInStock > 0 ? (
+                <button className="add-to-cart-btn" onClick={handleAddToCartClick}>
+                  Add to Cart
+                </button>
               ) : (
-                product.countInStock > 0 ? (
-                  <button className="add-to-cart-btn" onClick={handleAddToCartClick}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                      <circle cx="9" cy="21" r="1" />
-                      <circle cx="20" cy="21" r="1" />
-                      <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-                    </svg>
-                    Add to Cart
-                  </button>
-                ) : (
-                  <button className="out-of-stock-btn" disabled>Out of Stock</button>
-                )
+                <button className="out-of-stock-btn" disabled>Out of Stock</button>
               )}
 
+              {/* Quantity Modal */}
               {showQuantityPrompt && (
-              <div className="disclaimer-overlay">
-                <div className="disclaimer-box">
-                  <h6 className="disclaimer-header">Select Quantity</h6>
-                  
-                  {/* Show User ID and Product ID */}
-                  <p>User ID: {userId}</p>
-                  <p>Product ID: {product._id}</p>
-
-                  <input
-                    type="number"
-                    min="1"
-                    max={product.countInStock}
-                    value={quantity}
-                    onChange={(e) => setQuantity(Number(e.target.value))}
-                    className="quantity-input"
-                  />
-                  <div className="modal-buttons">
-                    <button className="disclaimer-button cancel" onClick={() => setShowQuantityPrompt(false)}>Cancel</button>
-                    <button className="disclaimer-button" onClick={confirmAddToCart}>Confirm</button>
+                <div className="disclaimer-overlay">
+                  <div className="disclaimer-box">
+                    <h6 className="disclaimer-header">Select Quantity</h6>
+                    <p>User ID: <strong>{isGuest ? 'Guest' : user._id}</strong></p>
+                    <p>Product ID: <strong>{productId}</strong></p>
+                    <input
+                      type="number"
+                      min="1"
+                      max={product.countInStock}
+                      value={quantity}
+                      onChange={(e) => setQuantity(Number(e.target.value))}
+                      className="quantity-input"
+                    />
+                    <div className="modal-buttons">
+                      <button className="disclaimer-button cancel" onClick={() => setShowQuantityPrompt(false)}>Cancel</button>
+                      <button className="disclaimer-button" onClick={confirmAddToCart}>Confirm</button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
+
               {/* Confirmation Modal */}
               {showConfirmation && (
                 <div className="disclaimer-overlay">
                   <div className="disclaimer-box">
-                    <img src="/assets/logo.png" alt="Logo" className="disclaimer-logo" />
                     <h6 className="disclaimer-header">Success!</h6>
                     <p className="disclaimer-text">{product.name} (x{quantity}) has been added to your cart.</p>
                     <button className="disclaimer-button" onClick={() => setShowConfirmation(false)}>Continue Shopping</button>
@@ -188,11 +174,8 @@ const ProductPage = () => {
           </div>
         </div>
 
-        {/* Related Products Section (Placeholder) */}
         <h2 className="section-heading">You May Also Like</h2>
-        <div className="product-grid">
-          {/* Related products go here */}
-        </div>
+        <div className="product-grid">{/* Related products here */}</div>
 
         <hr className="bottom-line" />
       </div>
