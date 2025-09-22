@@ -1,3 +1,4 @@
+//addToCart.js
 const mongoose = require('mongoose');
 
 const addToCartSchema = new mongoose.Schema({
