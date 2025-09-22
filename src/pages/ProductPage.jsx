@@ -71,7 +71,7 @@ const ProductPage = () => {
 
   const confirmAddToCart = () => {
     if (typeof addToCart === 'function') {
-      addToCart(product, quantity);
+      addToCart({ ...product, userId }, quantity); // attach userId if needed
       setShowQuantityPrompt(false);
       setShowConfirmation(true);
       setTimeout(() => {
@@ -146,27 +146,30 @@ const ProductPage = () => {
                 )
               )}
 
-              {/* Quantity Prompt Modal */}
               {showQuantityPrompt && (
-                <div className="disclaimer-overlay">
-                  <div className="disclaimer-box">
-                    <h6 className="disclaimer-header">Select Quantity</h6>
-                    <input
-                      type="number"
-                      min="1"
-                      max={product.countInStock}
-                      value={quantity}
-                      onChange={(e) => setQuantity(Number(e.target.value))}
-                      className="quantity-input"
-                    />
-                    <div className="modal-buttons">
-                      <button className="disclaimer-button cancel" onClick={() => setShowQuantityPrompt(false)}>Cancel</button>
-                      <button className="disclaimer-button" onClick={confirmAddToCart}>Confirm</button>
-                    </div>
+              <div className="disclaimer-overlay">
+                <div className="disclaimer-box">
+                  <h6 className="disclaimer-header">Select Quantity</h6>
+                  
+                  {/* Show User ID and Product ID */}
+                  <p>User ID: {userId}</p>
+                  <p>Product ID: {product._id}</p>
+
+                  <input
+                    type="number"
+                    min="1"
+                    max={product.countInStock}
+                    value={quantity}
+                    onChange={(e) => setQuantity(Number(e.target.value))}
+                    className="quantity-input"
+                  />
+                  <div className="modal-buttons">
+                    <button className="disclaimer-button cancel" onClick={() => setShowQuantityPrompt(false)}>Cancel</button>
+                    <button className="disclaimer-button" onClick={confirmAddToCart}>Confirm</button>
                   </div>
                 </div>
-              )}
-
+              </div>
+            )}
               {/* Confirmation Modal */}
               {showConfirmation && (
                 <div className="disclaimer-overlay">
