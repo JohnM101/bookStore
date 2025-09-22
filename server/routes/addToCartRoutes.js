@@ -13,11 +13,12 @@ router.post('/', protect, async (req, res) => {
     let cartItem = await AddToCart.findOne({ userId: req.user._id, productId });
 
     if (cartItem) {
-      cartItem.quantity = quantity;
-      await cartItem.save();
-      return res.status(200).json(cartItem);
-    }
-
+    const newQuantity = cartItem.quantity + quantity;
+    const productStock = (await Product.findById(productId)).countInStock;
+    cartItem.quantity = Math.min(newQuantity, productStock);
+    await cartItem.save();
+    return res.status(200).json(cartItem);
+}
     cartItem = await AddToCart.create({ userId: req.user._id, productId, quantity });
     res.status(201).json(cartItem);
   } catch (err) {
