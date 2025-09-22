@@ -47,6 +47,40 @@ export const CartProvider = ({ children }) => {
 
   // Add item to cart locally and optionally sync backend
   const addToCart = async (product, quantity) => {
+  // Sync to backend
+  if (!isGuest && user && user._id) {
+    try {
+      const res = await fetch(`${API_URL}/api/cart`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ productId: product._id, quantity }),
+      });
+      if (!res.ok) throw new Error('Failed to add to cart');
+
+      const data = await res.json();
+
+      // Refetch the cart to get the latest quantities
+      const cartRes = await fetch(`${API_URL}/api/cart`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const cartData = await cartRes.json();
+      const mappedCart = cartData
+        .filter(item => item.productId)
+        .map(item => ({
+          _id: item._id,
+          id: item.productId._id,
+          name: item.productId.name,
+          price: item.productId.price,
+          image: item.productId.image,
+          quantity: item.quantity,
+        }));
+      setCart(mappedCart);
+
+    } catch (err) {
+      console.error('Failed to add to backend cart:', err);
+    }
+  } else {
+    // For guests, just update local state
     setCart(prev => {
       const existing = prev.find(item => item.id === product._id);
       if (existing) {
@@ -56,48 +90,53 @@ export const CartProvider = ({ children }) => {
       }
       return [...prev, { ...product, id: product._id, quantity }];
     });
-
-    // Sync to backend
-    if (!isGuest && user && user._id) {
-      try {
-        await fetch(`${API_URL}/api/cart`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ productId: product._id, quantity }),
-        });
-      } catch (err) {
-        console.error('Failed to add to backend cart:', err);
-      }
-    }
-  };
+  }
+};
 
   // Update quantity dynamically
   const updateQuantity = async (productId, newQuantity) => {
-    // Remove from cart if quantity <= 0
-    if (newQuantity <= 0) {
-      removeFromCart(productId);
-      return;
-    }
+  if (newQuantity <= 0) {
+    removeFromCart(productId);
+    return;
+  }
 
-    // Update frontend state immediately
+  // Update backend first
+  if (!isGuest && user && user._id) {
+    try {
+      const response = await fetch(`${API_URL}/api/cart`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ productId, quantity: newQuantity }),
+      });
+      if (!response.ok) throw new Error('Failed to update cart quantity');
+
+      // Refetch the cart
+      const cartRes = await fetch(`${API_URL}/api/cart`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const cartData = await cartRes.json();
+      const mappedCart = cartData
+        .filter(item => item.productId)
+        .map(item => ({
+          _id: item._id,
+          id: item.productId._id,
+          name: item.productId.name,
+          price: item.productId.price,
+          image: item.productId.image,
+          quantity: item.quantity,
+        }));
+      setCart(mappedCart);
+
+    } catch (err) {
+      console.error('Error updating cart quantity:', err);
+    }
+  } else {
+    // Guest: just update local state
     setCart(prev =>
       prev.map(item => (item.id === productId ? { ...item, quantity: newQuantity } : item))
     );
-
-    // Update backend dynamically
-    if (!isGuest && user && user._id) {
-      try {
-        const response = await fetch(`${API_URL}/api/cart`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ productId, quantity: newQuantity }),
-        });
-        if (!response.ok) throw new Error('Failed to update cart quantity');
-      } catch (err) {
-        console.error('Error updating cart quantity:', err);
-      }
-    }
-  };
+  }
+};
 
   // Remove item from cart
   const removeFromCart = async (productId) => {
