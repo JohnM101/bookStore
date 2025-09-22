@@ -60,37 +60,25 @@ const ProductPage = () => {
   };
 
   const confirmAddToCart = async () => {
-    if (typeof addToCart === 'function') {
-      addToCart(product, quantity);
+  if (typeof addToCart !== 'function') {
+    console.error('addToCart is not available');
+    return;
+  }
 
-      // Persist to backend if logged in
-      if (!isGuest && user && user._id) {
-        try {
-          const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://bookstore-0hqj.onrender.com';
-          const token = localStorage.getItem('token');
-          const res = await fetch(`${API_URL}/api/cart`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ productId, quantity }),
-          });
-          if (!res.ok) throw new Error('Failed to add to cart');
-          const data = await res.json();
-          console.log('Cart updated in DB:', data);
-        } catch (err) {
-          console.error('Error saving cart:', err);
-        }
-      }
+  try {
+    // Call CartContext's addToCart, which updates state and backend
+    await addToCart(product, quantity);
 
-      setShowQuantityPrompt(false);
-      setShowConfirmation(true);
-      setTimeout(() => setShowConfirmation(false), 3000);
-    } else {
-      console.error('addToCart is not available');
-    }
-  };
+    // Close quantity modal and show confirmation
+    setShowQuantityPrompt(false);
+    setShowConfirmation(true);
+
+    // Hide confirmation automatically after 3 seconds
+    setTimeout(() => setShowConfirmation(false), 3000);
+  } catch (err) {
+    console.error('Error adding to cart:', err);
+  }
+};
 
   return (
     <div className="app">
@@ -153,12 +141,23 @@ const ProductPage = () => {
                       className="quantity-input"
                     />
                     <div className="modal-buttons">
-                      <button className="disclaimer-button cancel" onClick={() => setShowQuantityPrompt(false)}>Cancel</button>
-                      <button className="disclaimer-button" onClick={confirmAddToCart}>Confirm</button>
+                      <button
+                        className="disclaimer-button cancel"
+                        onClick={() => setShowQuantityPrompt(false)}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        className="disclaimer-button"
+                        onClick={confirmAddToCart} // ← Use the corrected function
+                      >
+                        Confirm
+                      </button>
                     </div>
                   </div>
                 </div>
               )}
+
 
               {/* Confirmation Modal */}
               {showConfirmation && (
