@@ -55,35 +55,45 @@ export const CartProvider = ({ children }) => {
   };
 
   const updateQuantity = async (productId, newQuantity) => {
-    if (newQuantity <= 0) {
-      removeFromCart(productId);
-      return;
-    }
+  if (newQuantity <= 0) {
+    removeFromCart(productId);
+    return;
+  }
 
-    setCart(prev =>
-      prev.map(item =>
-        item.id === productId ? { ...item, quantity: newQuantity } : item
-      )
-    );
+  // 1️⃣ Update frontend state immediately
+  setCart(prev =>
+    prev.map(item =>
+      item.id === productId ? { ...item, quantity: newQuantity } : item
+    )
+  );
 
-    // Update backend
-    if (!isGuest && user && user._id) {
-      try {
-        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://bookstore-0hqj.onrender.com';
-        const token = localStorage.getItem('token');
-        await fetch(`${API_URL}/api/cart`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ productId, quantity: newQuantity }),
-        });
-      } catch (err) {
-        console.error('Failed to update quantity on backend:', err);
+  // 2️⃣ Update backend dynamically
+  if (!isGuest && user && user._id) {
+    try {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://bookstore-0hqj.onrender.com';
+      const token = localStorage.getItem('token');
+
+      // Call backend API to update quantity
+      const response = await fetch(`${API_URL}/api/cart`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ productId, quantity: newQuantity }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update cart quantity in backend');
       }
+
+      const data = await response.json();
+      console.log('Backend cart updated:', data);
+    } catch (err) {
+      console.error('Error updating cart quantity:', err);
     }
-  };
+  }
+};
 
   const removeFromCart = async (productId) => {
     setCart(prev => prev.filter(item => item.id !== productId));
