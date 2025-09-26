@@ -1,6 +1,8 @@
+// pages/homepage.jsx
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
+import { CATEGORIES } from '../data/categories';
 import './homepage.css';
 
 const Homepage = () => {
@@ -16,7 +18,6 @@ const Homepage = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Get user details from localStorage
   const user = JSON.parse(localStorage.getItem('user'));
 
   // Check disclaimer flag on first render
@@ -43,10 +44,12 @@ const Homepage = () => {
         if (!response.ok) throw new Error('Failed to fetch products');
 
         const products = await response.json();
+
+        // Group products by category slug
         const categorizedProducts = products.reduce((acc, product) => {
-          const category = product.category;
-          if (!acc[category]) acc[category] = [];
-          acc[category].push(product);
+          const categorySlug = product.category;
+          if (!acc[categorySlug]) acc[categorySlug] = [];
+          acc[categorySlug].push(product);
           return acc;
         }, {});
 
@@ -73,41 +76,44 @@ const Homepage = () => {
     setShowDisclaimer(false);
   };
 
-  const renderProductSection = (title, products) => {
+  // Helper to get category display name from slug
+  const getCategoryName = (slug) => {
+    const category = CATEGORIES.find(c => c.slug === slug);
+    return category ? category.name : slug;
+  };
+
+  // Render product section
+  const renderProductSection = (title, products, slug) => {
     if (!products || products.length === 0) return null;
 
     return (
-      <div className={`product-section ${title.toLowerCase()}-section`}>
+      <div key={slug} className={`product-section ${slug}-section`}>
         <h2>{title.toUpperCase()} ──────────────────────────────────</h2>
         <div className="product-list">
           {products.slice(0, 4).map((product) => (
             <div
               className="product-card"
-              key={product._id}
-              onClick={() => navigate(`/product/${product._id}`)}
+              key={product._id || product.id}
+              onClick={() => navigate(`/product/${product._id || product.id}`)}
             >
               <img src={product.image} alt={product.name} />
               <p className="product-name">{product.name}</p>
               <p className="product-subtitle">
                 {product.description.substring(0, 30)}...
               </p>
-              <p className="price">₱{product.price.toFixed(2)}</p>
+              <p className="price">₱{product.price?.toFixed(2) || 'N/A'}</p>
             </div>
           ))}
         </div>
-        <Link to={`/${title.toLowerCase()}`} className="view-all">
-          View All
-        </Link>
+        <Link to={`/${slug}`} className="view-all">View All</Link>
       </div>
     );
   };
 
   return (
     <div className="app">
-      {/* Navbar stays mounted */}
       <Navbar />
 
-      {/* Disclaimer overlay only if needed */}
       {showDisclaimer && (
         <div className="disclaimer-overlay">
           <div className="disclaimer-box">
@@ -134,17 +140,15 @@ const Homepage = () => {
         </div>
       )}
 
-      {/* Carousel */}
       <div className="carousel">
         <img src={banners[current]} alt={`Banner ${current + 1}`} />
       </div>
 
-      {/* Product Sections */}
       {loading ? (
         <div className="loading">Loading products...</div>
       ) : (
-        Object.entries(productData).map(([title, products]) =>
-          renderProductSection(title, products)
+        Object.entries(productData).map(([slug, products]) =>
+          renderProductSection(getCategoryName(slug), products, slug)
         )
       )}
     </div>
