@@ -1,15 +1,17 @@
 // src/pages/MangaCategoryPage.jsx
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams, Link } from 'react-router-dom';
 import './categories.css';
 const RENDER_URL = process.env.REACT_APP_RENDER_URL;
 
-const MangaCategoryPage = ({ category, heading }) => {
+const MangaCategoryPage = ({ baseCategory, heading }) => {
     const navigate = useNavigate();
+    const { subcategory } = useParams(); // e.g. "adventure" or undefined
     const [productsData, setProductsData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [sortOption, setSortOption] = useState('default');
+    const [subcategories, setSubcategories] = useState([]);
 
     useEffect(() => {
         const loadProducts = async () => {
@@ -21,21 +23,32 @@ const MangaCategoryPage = ({ category, heading }) => {
                 const token = user ? user.token : null;
 
                 const response = await fetch(`${API_URL}/api/admin/products`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
+                    headers: { 'Authorization': `Bearer ${token}` }
                 });
 
                 if (!response.ok) throw new Error('Failed to fetch products');
 
                 const allProducts = await response.json();
-                const filteredProducts = allProducts.filter(
-                    product => product.category === category
-                );
+
+                // ✅ Filter products: either all under baseCategory, or one subcategory
+                const filteredProducts = allProducts.filter(product => {
+                    if (subcategory) {
+                        return product.category === `${baseCategory}/${subcategory}`;
+                    } else {
+                        return product.category.startsWith(baseCategory);
+                    }
+                });
 
                 setProductsData(filteredProducts);
+
+                // ✅ Collect unique subcategories for navigation menu
+                const allSubcats = allProducts
+                    .filter(product => product.category.startsWith(baseCategory))
+                    .map(product => product.category.replace(`${baseCategory}/`, ''));
+
+                setSubcategories([...new Set(allSubcats)]);
             } catch (err) {
-                console.error(`Failed to fetch products for ${category}:`, err);
+                console.error(`Failed to fetch products for ${baseCategory}:`, err);
                 setError('Failed to load products. Please try again later.');
             } finally {
                 setLoading(false);
@@ -43,7 +56,7 @@ const MangaCategoryPage = ({ category, heading }) => {
         };
 
         loadProducts();
-    }, [category]);
+    }, [baseCategory, subcategory]);
 
     const handleSortChange = (e) => {
         setSortOption(e.target.value);
@@ -66,7 +79,28 @@ const MangaCategoryPage = ({ category, heading }) => {
     return (
         <div className="app">
             <div className="product-section">
-                <h2 className="section-heading">{heading}</h2>
+                <h2 className="section-heading">
+                    {heading}{subcategory ? ` – ${subcategory.toUpperCase()}` : ''}
+                </h2>
+
+                {/* ✅ Subcategory navigation */}
+                <div className="subcategory-nav">
+                    <Link
+                        to={`/${baseCategory}`}
+                        className={!subcategory ? "active-subcat" : ""}
+                    >
+                        All
+                    </Link>
+                    {subcategories.map(sc => (
+                        <Link
+                            key={sc}
+                            to={`/${baseCategory}/${sc}`}
+                            className={subcategory === sc ? "active-subcat" : ""}
+                        >
+                            {sc.charAt(0).toUpperCase() + sc.slice(1)}
+                        </Link>
+                    ))}
+                </div>
 
                 <div className="sorting-controls">
                     <label htmlFor="sort-select">Sort by:</label>

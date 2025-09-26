@@ -548,3 +548,29 @@ text-align: center;
   background-color: #f5f5f5;
 }
 
+
+.subcategory-nav {
+  margin: 20px 0;
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.subcategory-nav a {
+  text-decoration: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: #f5f5f5;
+  color: #333;
+  transition: 0.2s;
+}
+
+.subcategory-nav a:hover {
+  background: #ddd;
+}
+
+.subcategory-nav .active-subcat {
+  background: #333;
+  color: #fff;
+  font-weight: bold;
+}
