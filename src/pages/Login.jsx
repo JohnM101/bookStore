@@ -2,9 +2,12 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useUser } from '../contexts/UserContext';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import { GoogleLogin } from '@react-oauth/google';
+import jwt_decode from 'jwt-decode';
 import './Login.css';
 
 const RENDER_URL = process.env.REACT_APP_RENDER_URL;
+
 const Login = () => {
     const navigate = useNavigate();
     const { login, continueAsGuest } = useUser();
@@ -15,7 +18,6 @@ const Login = () => {
     const [passwordFocused, setPasswordFocused] = useState(false);
 
     const handleEmailChange = (e) => setEmailInput(e.target.value);
-
     const handlePasswordFocus = () => setPasswordFocused(true);
     const handlePasswordBlur = () => setTimeout(() => setPasswordFocused(false), 10);
     const togglePasswordVisibility = () => setShowPassword(!showPassword);
@@ -54,7 +56,7 @@ const Login = () => {
             const response = await fetch(`${API_URL}/api/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password })
+                body: JSON.stringify({ email, password }),
             });
 
             if (!response.ok) throw new Error('Login failed');
@@ -62,9 +64,9 @@ const Login = () => {
 
             if (!data.token) throw new Error('Token not received');
 
-            // 2. Fetch full profile to get _id and all details
+            // 2. Fetch full profile
             const profileRes = await fetch(`${API_URL}/api/users/profile`, {
-                headers: { 'Authorization': `Bearer ${data.token}` }
+                headers: { 'Authorization': `Bearer ${data.token}` },
             });
 
             if (!profileRes.ok) throw new Error('Failed to fetch profile');
@@ -78,11 +80,8 @@ const Login = () => {
                 isGuest: false,
             };
 
-            console.log("Complete user data:", userData);
-
             // 4. Login via context
             const success = await login(userData);
-
             if (success) {
                 if (userData.role === 'admin') navigate('/admin');
                 else navigate('/');
@@ -94,6 +93,29 @@ const Login = () => {
             setError('Invalid email or password. Please try again.');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleGoogleLogin = async (credentialResponse) => {
+        try {
+            const decoded = jwt_decode(credentialResponse.credential);
+            console.log('Google user:', decoded); // email, name, sub
+
+            const API_URL = process.env.NEXT_PUBLIC_API_URL || RENDER_URL;
+            const res = await fetch(`${API_URL}/api/auth/google-login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: credentialResponse.credential }),
+            });
+
+            if (!res.ok) throw new Error('Google login failed');
+            const data = await res.json();
+
+            await login(data.user);
+            navigate('/');
+        } catch (err) {
+            console.error('Google login error:', err);
+            setError('Google login failed. Please try again.');
         }
     };
 
@@ -140,8 +162,15 @@ const Login = () => {
                         </div>
                         <div className="login-options">
                             <button type="submit" className="sign-in" disabled={loading}>
-                                {loading ? 'LOGING IN...' : 'LOG IN'}
+                                {loading ? 'LOGGING IN...' : 'LOG IN'}
                             </button>
+
+                            <div className="google-login">
+                                <GoogleLogin
+                                    onSuccess={handleGoogleLogin}
+                                    onError={() => setError('Google login failed. Please try again.')}
+                                />
+                            </div>
                         </div>
                         <div className="create-account">
                             <Link to="/create-account" className="auth-link create-account-btn">Create Account</Link>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import Login from './pages/Login';
 import CreateAccount from './pages/createaccount';
 import ForgotPassword from './pages/forgotpassword';
@@ -27,6 +28,9 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import './styles/Responsive.css';
 import './App.css';
+
+// Make sure this is set in your .env file
+const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
 
 const AppLayout = () => {
   const location = useLocation();
@@ -107,13 +111,15 @@ const AppLayout = () => {
 
 function App() {
   return (
-    <Router>
-      <UserProvider>
-        <CartProvider>
-          <AppLayout />
-        </CartProvider>
-      </UserProvider>
-    </Router>
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+      <Router>
+        <UserProvider>
+          <CartProvider>
+            <AppLayout />
+          </CartProvider>
+        </UserProvider>
+      </Router>
+    </GoogleOAuthProvider>
   );
 }
 
