@@ -5,7 +5,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './checkOut.css';
 import { useCart } from '../contexts/CartContext';
-import { RENDER_URL } from '../../config/urls';
+import { RENDER_URL } from '../config/urls';
 
 
 const Checkout = () => {

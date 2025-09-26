@@ -3,7 +3,7 @@ import { FaHeart, FaCog,FaUser, FaCreditCard, FaMapMarkerAlt } from 'react-icons
 import { Link } from 'react-router-dom';
 import './profile.css';
 import { useUser } from '../contexts/UserContext';
-import { RENDER_URL } from '../../config/urls';
+import { RENDER_URL } from '../config/urls';
 
 const Address = () => {
     const { user, updateUser, setUser } = useUser();

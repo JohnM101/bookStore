@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import './categories.css';
-import { RENDER_URL } from '../../config/urls';
+import { RENDER_URL } from '../config/urls';
 
 const Clothing = () => {
     const navigate = useNavigate();

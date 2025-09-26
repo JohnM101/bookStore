@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useUser } from '../contexts/UserContext';
 import { FaEye, FaEyeSlash } from 'react-icons/fa'; // Import eye icons
 import './Login.css';
-import { RENDER_URL } from '../../config/urls';
+import { RENDER_URL } from '../config/urls';
 
 const CreateAccount = () => {
   const navigate = useNavigate();
