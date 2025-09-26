@@ -3,7 +3,6 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useUser } from '../contexts/UserContext';
 import { FaEye, FaEyeSlash } from 'react-icons/fa'; // Import eye icons
 import './Login.css';
-const RENDER_URL = process.env.REACT_APP_RENDER_URL;
 
 const CreateAccount = () => {
   const navigate = useNavigate();
@@ -106,12 +105,12 @@ const CreateAccount = () => {
       };
       
       // Send registration data to backend
-      const response = await fetch(`${RENDER_URL}/api/auth/register`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(userData),
+      const response = await fetch('https://bookstore-0hqj.onrender.com/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userData),
       });
       
       const data = await response.json();
