@@ -1,4 +1,4 @@
-//productPage.jsx
+// src/pages/ProductPage.jsx
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import './categories.css';
@@ -61,25 +61,24 @@ const ProductPage = () => {
   };
 
   const confirmAddToCart = async () => {
-  if (typeof addToCart !== 'function') {
-    console.error('addToCart is not available');
-    return;
-  }
+    if (typeof addToCart !== 'function') {
+      console.error('addToCart is not available');
+      return;
+    }
 
-  try {
-    // Call CartContext's addToCart, which updates state and backend
-    await addToCart(product, quantity);
+    try {
+      await addToCart(product, quantity);
+      setShowQuantityPrompt(false);
+      setShowConfirmation(true);
+      setTimeout(() => setShowConfirmation(false), 3000);
+    } catch (err) {
+      console.error('Error adding to cart:', err);
+    }
+  };
 
-    // Close quantity modal and show confirmation
-    setShowQuantityPrompt(false);
-    setShowConfirmation(true);
-
-    // Hide confirmation automatically after 3 seconds
-    setTimeout(() => setShowConfirmation(false), 3000);
-  } catch (err) {
-    console.error('Error adding to cart:', err);
-  }
-};
+  // ✅ Build category + genre links
+  const categoryLink = `/${product.category}`;
+  const genreLink = product.subcategory ? `/${product.category}/${product.subcategory}` : null;
 
   return (
     <div className="app">
@@ -103,9 +102,25 @@ const ProductPage = () => {
             <p className="product-description">{product.description}</p>
 
             <div className="product-meta">
-              <p>Category: <span>{product.category}</span></p>
               <p>
-                Stock: <span>{product.countInStock > 0 ? product.countInStock : 'Out of Stock'}</span>
+                Category:{" "}
+                <Link to={categoryLink} className="meta-button">
+                  {product.category}
+                </Link>
+              </p>
+
+              {genreLink && (
+                <p>
+                  Genre:{" "}
+                  <Link to={genreLink} className="meta-button">
+                    {product.subcategory}
+                  </Link>
+                </p>
+              )}
+
+              <p>
+                Stock:{" "}
+                <span>{product.countInStock > 0 ? product.countInStock : "Out of Stock"}</span>
               </p>
               {product.countInStock > 0 && product.countInStock < 4 && (
                 <p className="stock-warning">Only {product.countInStock} left — order soon!</p>
@@ -142,30 +157,21 @@ const ProductPage = () => {
                       className="quantity-input"
                     />
                     <div className="modal-buttons">
-                      <button
-                        className="disclaimer-button cancel"
-                        onClick={() => setShowQuantityPrompt(false)}
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        className="disclaimer-button"
-                        onClick={confirmAddToCart} // ← Use the corrected function
-                      >
-                        Confirm
-                      </button>
+                      <button className="disclaimer-button cancel" onClick={() => setShowQuantityPrompt(false)}>Cancel</button>
+                      <button className="disclaimer-button" onClick={confirmAddToCart}>Confirm</button>
                     </div>
                   </div>
                 </div>
               )}
-
 
               {/* Confirmation Modal */}
               {showConfirmation && (
                 <div className="disclaimer-overlay">
                   <div className="disclaimer-box">
                     <h6 className="disclaimer-header">Success!</h6>
-                    <p className="disclaimer-text">{product.name} (x{quantity}) has been added to your cart.</p>
+                    <p className="disclaimer-text">
+                      {product.name} (x{quantity}) has been added to your cart.
+                    </p>
                     <button className="disclaimer-button" onClick={() => setShowConfirmation(false)}>Continue Shopping</button>
                   </div>
                 </div>

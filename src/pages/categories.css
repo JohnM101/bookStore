@@ -574,3 +574,17 @@ text-align: center;
   color: #fff;
   font-weight: bold;
 }
+
+.meta-button {
+  display: inline-block;
+  background: #0077ff;
+  color: #fff;
+  padding: 5px 10px;
+  margin-left: 6px;
+  border-radius: 5px;
+  text-decoration: none;
+  transition: background 0.3s;
+}
+.meta-button:hover {
+  background: #0055cc;
+}
