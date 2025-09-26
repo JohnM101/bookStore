@@ -3,10 +3,11 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useUser } from '../contexts/UserContext';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
-import { GoogleLogin } from '@react-oauth/google';
+import { GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google';
 import './Login.css';
 
-const API_URL = process.env.REACT_APP_RENDER_URL;
+const API_URL = "https://bookstore-0hqj.onrender.com"; // directly set instead of env
+const GOOGLE_CLIENT_ID = "511179588658-8e82oafm9llk795hav0v46iccddngjj3.apps.googleusercontent.com";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -96,28 +97,28 @@ const Login = () => {
   // Google Login
   // -------------------------
   const handleGoogleLogin = async (credentialResponse) => {
-  setLoading(true);
-  setError('');
+    setLoading(true);
+    setError('');
 
-  try {
-    const res = await fetch(`${API_URL}/api/auth/google-login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token: credentialResponse.credential }),
-    });
+    try {
+      const res = await fetch(`${API_URL}/api/auth/google-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: credentialResponse.credential }),
+      });
 
-    if (!res.ok) throw new Error('Google login failed');
-    const data = await res.json();
+      if (!res.ok) throw new Error('Google login failed');
+      const data = await res.json();
 
-    await login(data); // save user in context
-    navigate('/'); // redirect after login
-  } catch (err) {
-    console.error('Google login error:', err);
-    setError('Google login failed. Please try again.');
-  } finally {
-    setLoading(false);
-  }
-};
+      await login(data); // save user in context
+      navigate('/'); // redirect after login
+    } catch (err) {
+      console.error('Google login error:', err);
+      setError('Google login failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="login-container">
@@ -172,11 +173,13 @@ const Login = () => {
               </button>
 
               <div className="google-login">
-                <GoogleLogin
-                onSuccess={handleGoogleLogin}
-                onError={() => setError('Google login failed. Please try again.')}
-                useOneTap
-                />
+                <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+                  <GoogleLogin
+                    onSuccess={handleGoogleLogin}
+                    onError={() => setError('Google login failed. Please try again.')}
+                    useOneTap
+                  />
+                </GoogleOAuthProvider>
               </div>
             </div>
 
