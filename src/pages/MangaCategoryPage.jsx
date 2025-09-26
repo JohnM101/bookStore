@@ -7,12 +7,12 @@ const RENDER_URL = process.env.REACT_APP_RENDER_URL;
 
 const MangaCategoryPage = ({ baseCategory, heading }) => {
   const navigate = useNavigate();
-  const { subcategory } = useParams(); // e.g. "adventure" or undefined
+  const { subcategory } = useParams(); // e.g., "adventure" or undefined
   const [productsData, setProductsData] = useState([]);
+  const [subcategories, setSubcategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [sortOption, setSortOption] = useState('default');
-  const [subcategories, setSubcategories] = useState([]);
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -31,27 +31,29 @@ const MangaCategoryPage = ({ baseCategory, heading }) => {
 
         const allProducts = await response.json();
 
-        // ✅ Filter products by baseCategory + subcategory
+        // Normalize and filter products by baseCategory + optional subcategory
         const filteredProducts = allProducts.filter((product) => {
-          if (subcategory) {
-            return (
-              product.category === baseCategory &&
-              product.subcategory === subcategory
-            );
+          const productCat = product.category?.toLowerCase().trim();
+          const productSub = product.subcategory?.toLowerCase().trim();
+          const baseCat = baseCategory.toLowerCase().trim();
+          const subCat = subcategory?.toLowerCase().trim();
+
+          if (subCat) {
+            return productCat === baseCat && productSub === subCat;
           } else {
-            return product.category === baseCategory;
+            return productCat === baseCat;
           }
         });
 
         setProductsData(filteredProducts);
 
-        // ✅ Build subcategory list from products
+        // Build subcategory list dynamically
         const allSubcats = allProducts
-          .filter((product) => product.category === baseCategory)
-          .map((product) => product.subcategory)
-          .filter(Boolean);
+          .filter((product) => product.category?.toLowerCase().trim() === baseCategory.toLowerCase().trim())
+          .map((product) => product.subcategory?.trim())
+          .filter(Boolean); // remove null/empty
 
-        setSubcategories([...new Set(allSubcats)]);
+        setSubcategories([...new Set(allSubcats)]); // unique values
       } catch (err) {
         console.error(`Failed to fetch products for ${baseCategory}:`, err);
         setError('Failed to load products. Please try again later.');
@@ -86,15 +88,12 @@ const MangaCategoryPage = ({ baseCategory, heading }) => {
       <div className="product-section">
         <h2 className="section-heading">
           {heading}
-          {subcategory ? ` – ${subcategory.toUpperCase()}` : ''}
+          {subcategory ? ` – ${subcategory.charAt(0).toUpperCase() + subcategory.slice(1)}` : ''}
         </h2>
 
-        {/* ✅ Subcategory navigation */}
+        {/* Subcategory navigation */}
         <div className="subcategory-nav">
-          <Link
-            to={`/${baseCategory}`}
-            className={!subcategory ? 'active-subcat' : ''}
-          >
+          <Link to={`/${baseCategory}`} className={!subcategory ? 'active-subcat' : ''}>
             All
           </Link>
           {subcategories.map((sc) => (
@@ -108,33 +107,35 @@ const MangaCategoryPage = ({ baseCategory, heading }) => {
           ))}
         </div>
 
+        {/* Sorting controls */}
         <div className="sorting-controls">
           <label htmlFor="sort-select">Sort by:</label>
-          <select
-            id="sort-select"
-            className="sort-select"
-            value={sortOption}
-            onChange={handleSortChange}
-          >
+          <select id="sort-select" value={sortOption} onChange={handleSortChange}>
             <option value="default">Default</option>
             <option value="price-low-to-high">Price: Low to High</option>
             <option value="price-high-to-low">Price: High to Low</option>
           </select>
         </div>
 
+        {/* Product grid */}
         <div className="product-grid">
           {getSortedProducts().length > 0 ? (
             getSortedProducts().map((product) => (
               <div
                 key={product._id || product.id}
                 className="product-card"
-                onClick={() =>
-                  navigate(`/product/${product._id || product.id}`)
-                }
+                onClick={() => navigate(`/product/${product._id || product.id}`)}
               >
-                <img src={product.image} alt={product.name} />
+                <img
+                  src={product.image}
+                  alt={product.name}
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = '/assets/placeholder-image.png';
+                  }}
+                />
                 <h3>{product.name}</h3>
-                <p className="price">₱{product.price.toFixed(2)}</p>
+                <p className="price">₱{product.price?.toFixed(2) || 'N/A'}</p>
               </div>
             ))
           ) : (
