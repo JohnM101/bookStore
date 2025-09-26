@@ -171,6 +171,21 @@ const Login = () => {
                                     onError={() => setError('Google login failed. Please try again.')}
                                 />
                             </div>
+
+                            <GoogleLogin
+                                onSuccess={async (credentialResponse) => {
+                                const res = await fetch(`${API_URL}/api/auth/google-login`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ token: credentialResponse.credential }),
+                                });
+                                const data = await res.json();
+                                login(data);  // Use your existing UserContext login function
+                                navigate('/');
+                                }}
+                                onError={() => console.error('Google login failed')}
+                            />
+
                         </div>
                         <div className="create-account">
                             <Link to="/create-account" className="auth-link create-account-btn">Create Account</Link>
