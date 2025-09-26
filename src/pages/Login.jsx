@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useUser } from '../contexts/UserContext';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
-const RENDER_URL = process.env.REACT_APP_RENDER_URL;
 import './Login.css';
 
+const RENDER_URL = process.env.REACT_APP_RENDER_URL;
 const Login = () => {
     const navigate = useNavigate();
     const { login, continueAsGuest } = useUser();
