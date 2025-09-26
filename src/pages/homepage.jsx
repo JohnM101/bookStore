@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import { CATEGORIES, CATEGORY_COLORS } from '../data/categories';
+import { CATEGORIES } from '../data/categories';
 import './homepage.css';
 
 const Homepage = () => {
@@ -20,27 +20,18 @@ const Homepage = () => {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user'));
 
-  // Check disclaimer flag on first render
   useEffect(() => {
     const hasSeenDisclaimer = localStorage.getItem('hasSeenDisclaimer');
-    if (!hasSeenDisclaimer) {
-      setShowDisclaimer(true);
-    }
+    if (!hasSeenDisclaimer) setShowDisclaimer(true);
   }, []);
 
-  // Fetch products
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://bookstore-0hqj.onrender.com';
         const token = user ? user.token : null;
-
-        const response = await fetch(`${API_URL}/api/admin/products`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
+        const response = await fetch(`${API_URL}/api/admin/products`, { headers: { Authorization: `Bearer ${token}` } });
         if (!response.ok) throw new Error('Failed to fetch products');
-
         const products = await response.json();
 
         const categorizedProducts = products.reduce((acc, product) => {
@@ -57,15 +48,11 @@ const Homepage = () => {
         setLoading(false);
       }
     };
-
     fetchProducts();
   }, [user]);
 
-  // Carousel auto-slide
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrent(prev => (prev + 1) % banners.length);
-    }, 4000);
+    const interval = setInterval(() => setCurrent(prev => (prev + 1) % banners.length), 4000);
     return () => clearInterval(interval);
   }, [banners.length]);
 
@@ -74,28 +61,16 @@ const Homepage = () => {
     setShowDisclaimer(false);
   };
 
-  // Helper to get category name
   const getCategoryName = slug => {
     const category = CATEGORIES.find(c => c.slug === slug);
     return category ? category.name : slug;
   };
 
-  // Render product section
   const renderProductSection = (slug, products) => {
     if (!products || products.length === 0) return null;
 
-    const bgColor = CATEGORY_COLORS[slug]?.bg || '#ccc';
-    const textColor = CATEGORY_COLORS[slug]?.text || '#fff';
-
     return (
-      <div
-        key={slug}
-        className={`product-section ${slug}-section`}
-        style={{
-          '--section-color': bgColor,
-          '--section-text-color': textColor,
-        }}
-      >
+      <div key={slug} className={`product-section ${slug}-section`}>
         <h2>{getCategoryName(slug).toUpperCase()} ──────────────────────────────</h2>
         <div className="product-list">
           {products.slice(0, 4).map(product => (
@@ -111,9 +86,7 @@ const Homepage = () => {
             </div>
           ))}
         </div>
-        <Link to={`/${slug}`} className="view-all">
-          View All
-        </Link>
+        <Link to={`/${slug}`} className="view-all">View All</Link>
       </div>
     );
   };

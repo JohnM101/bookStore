@@ -41,7 +41,6 @@ body {
   margin-bottom: 3rem;
   line-height: 1.2;
   letter-spacing: 0.5px;
-  position: relative;
 }
 
 .product-list {
@@ -155,10 +154,42 @@ body {
 }
 .disclaimer-button:hover { background-color: #373737; }
 
+/* Category-specific colors */
+.kids-manga-section {
+  --section-color: #facc15;
+  --section-text-color: #000;
+}
+
+.young-boys-manga-section {
+  --section-color: #60a5fa;
+  --section-text-color: #fff;
+}
+
+.young-girls-manga-section {
+  --section-color: #f472b6;
+  --section-text-color: #fff;
+}
+
 /* Media Queries */
-@media (max-width: 992px) { .carousel { height: 60vh; } .product-section h2 { font-size: 2.2rem; padding-left: 1rem; margin-bottom: 2rem; } .product-list { gap: 1rem; } }
-@media (max-width: 768px) { .carousel { height: 50vh; } .product-section { padding: 1.5rem 0.5rem; border-left-width: 5px; } .product-section h2 { font-size: 1.8rem; margin-bottom: 1.5rem; } .product-card { margin-bottom: 1rem; } }
-@media (max-width: 576px) { .carousel { height: 40vh; } .product-section h2 { font-size: 1.5rem; padding-left: 0.7rem; text-align: center; } .disclaimer-box { padding: 1.5rem; } .disclaimer-header { font-size: 1.3rem; } .disclaimer-text { font-size: 0.9rem; } .disclaimer-button { padding: 8px 20px; font-size: 14px; } }
+@media (max-width: 992px) { 
+  .carousel { height: 60vh; } 
+  .product-section h2 { font-size: 2.2rem; padding-left: 1rem; margin-bottom: 2rem; } 
+  .product-list { gap: 1rem; } 
+}
+@media (max-width: 768px) { 
+  .carousel { height: 50vh; } 
+  .product-section { padding: 1.5rem 0.5rem; border-left-width: 5px; } 
+  .product-section h2 { font-size: 1.8rem; margin-bottom: 1.5rem; } 
+  .product-card { margin-bottom: 1rem; } 
+}
+@media (max-width: 576px) { 
+  .carousel { height: 40vh; } 
+  .product-section h2 { font-size: 1.5rem; padding-left: 0.7rem; text-align: center; } 
+  .disclaimer-box { padding: 1.5rem; } 
+  .disclaimer-header { font-size: 1.3rem; } 
+  .disclaimer-text { font-size: 0.9rem; } 
+  .disclaimer-button { padding: 8px 20px; font-size: 14px; } 
+}
 
 /* Loading */
 .loading {
