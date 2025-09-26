@@ -7,11 +7,17 @@ import CreateAccount from './pages/createaccount';
 import ForgotPassword from './pages/forgotpassword';
 import Homepage from './pages/homepage';
 import Profile from './pages/profile';
-import Desktop from './pages/desktop';
-import Clothing from './pages/clothing';
-import Figurines from './pages/figurines';
-import Plushies from './pages/plushies';
-import Varieties from './pages/varieties';
+
+// import Desktop from './pages/desktop';
+// import Clothing from './pages/clothing';
+// import Figurines from './pages/figurines';
+// import Plushies from './pages/plushies';
+// import Varieties from './pages/varieties';
+
+import KidsManga from './pages/kidsManga';
+import YoungBoysManga from './pages/youngBoysManga';
+import YoungGirlsManga from './pages/youngGirlsManga';
+
 import ProductPage from './pages/ProductPage';
 import Address from './pages/address';
 import Wishlist from './pages/wishlist';
@@ -54,11 +60,9 @@ const AppLayout = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/about-faqs" element={<AboutFAQs />} />
         <Route path="/product/:productId" element={<ProductPage />} />
-        <Route path="/desktop" element={<Desktop />} />
-        <Route path="/clothing" element={<Clothing />} />
-        <Route path="/figurines" element={<Figurines />} />
-        <Route path="/plushies" element={<Plushies />} />
-        <Route path="/varieties" element={<Varieties />} />
+        <Route path="/kidsManga" element={<KidsManga />} />
+        <Route path="/youngBoysManga" element={<YoungBoysManga />} />
+        <Route path="/youngGirlsManga" element={<YoungGirlsManga />} />
         <Route path="/:category/:subcategory" element={<SubcategoryPage />} />
         
         {/* Admin routes */}

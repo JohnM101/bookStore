@@ -10,54 +10,52 @@ import './AdminDashboard.css';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://bookstore-0hqj.onrender.com';
 
 const CATEGORIES = [
-  'Desktop',
-  'Clothing',
-  'Figurines',
-  'Plushies',
-  'Varieties'
+  'Kids Manga',
+  'Young Boys Manga',
+  'Young Girls Manga',
 ];
 
+
 const SUBCATEGORIES = {
-  'Desktop': ['Mousepads', 'Desk Organizers', 'Wall Art', 'Desk Lamps', 'Coasters'],
-  'Clothing': ['T-Shirts', 'Hoodies', 'Accessories', 'Cosplay', 'Socks'],
-  'Figurines': ['Scaled Figures', 'Nendoroids', 'Acrylic Stands', 'Mini Figurines', 'Gachapons'],
-  'Plushies': ['Animal Plushies', 'Character Plushies', 'Keychain Plushies', 'Pillow Plushies', 'Blanket Plushies'],
-  'Varieties': ['Manga', 'Anime DVDs and Blurays', 'Art Books', 'Light Novels', 'Videogames']
+  'Kids Manga': ['Adventure', 'Animal-Slice of Life', 'Comedy', 'Fantasy'],
+  'Young Boys Manga': ['Action-Fighting', 'Adventure', 'Fantasy-Supernatural', 'Sports-Competition'],
+  'Young Girls Manga': ['Drama-Slice of Life', 'Magical Girl-Fantasy', 'Romance', 'School Life-Friendship'],
 };
+
 
 const convertToUrlFormat = (subcategoryName) => {
   // Handle special cases first
   const specialCases = {
-    'Mousepads': 'mousepad',
-    'Desk Organizers': 'deskorganizers',
-    'Wall Art': 'wallart',
-    'Desk Lamps': 'desklamps',
-    'Coasters': 'coasters',
-    'T-Shirts': 't-shirts',
-    'Scaled Figures': 'figures',
-    'Nendoroids': 'nendoroids',
-    'Acrylic Stands': 'acrylic',
-    'Mini Figurines': 'mini',
-    'Gachapons': 'gacha',
-    'Animal Plushies': 'animal',
-    'Character Plushies': 'character',
-    'Keychain Plushies': 'keychain',
-    'Pillow Plushies': 'pillow',
-    'Blanket Plushies': 'blanket',
-    'Manga': 'manga',
-    'Anime DVDs and Blurays': 'dvd',
-    'Art Books': 'books',
-    'Light Novels': 'novels',
-    'Videogames': 'games'
+    // Kids Manga
+    'Adventure': 'adventure',
+    'Animal-Slice of Life': 'animalsliceoflife',
+    'Comedy': 'comedy',
+    'Fantasy': 'fantasy',
+
+
+    // Young Boys Manga
+    'Action-Fighting': 'actionfighting',
+    'Fantasy-Supernatural': 'fantasysupernatural',
+    'Sports-Competition': 'sportscompetition',
+
+
+    // Young Girls Manga
+    'Drama-Slice of Life': 'dramasliceoflife',
+    'Magical Girl-Fantasy': 'magicalgirlfantasy',
+    'Romance': 'romance',
+    'School Life-Friendship': 'schoollifefriendship',
   };
-  
+
+
   if (specialCases[subcategoryName]) {
     return specialCases[subcategoryName];
   }
-  
-  // Default conversion: lowercase and remove spaces
-  return subcategoryName.toLowerCase().replace(/\s+/g, '');
+
+
+  // Default conversion: lowercase and remove spaces/special characters
+  return subcategoryName.toLowerCase().replace(/[^a-z0-9]/g, '');
 };
+
 
 const ProductManagement = () => {
   const [products, setProducts] = useState([]);
