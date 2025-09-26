@@ -1,4 +1,3 @@
-// src/pages/Login.jsx
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useUser } from '../contexts/UserContext';
@@ -17,7 +16,6 @@ const Login = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleEmailChange = (e) => setEmailInput(e.target.value);
   const togglePasswordVisibility = () => setShowPassword(!showPassword);
 
   const handleSubmit = async (e) => {
@@ -28,7 +26,7 @@ const Login = () => {
     const email = e.target.email.value;
     const password = e.target.password.value;
 
-    // Admin shortcut (development only)
+    // Admin shortcut (dev only)
     if (email === 'admin' && password === 'admin') {
       await login({
         _id: 'admin-id',
@@ -51,7 +49,7 @@ const Login = () => {
       const userData = JSON.parse(localStorage.getItem('user'));
       if (userData.role === 'admin') navigate('/admin');
       else navigate('/');
-    } catch (err) {
+    } catch {
       setError('Invalid email or password. Please try again.');
     } finally {
       setLoading(false);
@@ -68,10 +66,9 @@ const Login = () => {
 
       if (!res.ok) throw new Error('Google login failed');
       const data = await res.json();
-      await login(data); // login via context
+      await login(data); // Login via context
       navigate('/');
-    } catch (err) {
-      console.error(err);
+    } catch {
       setError('Google login failed. Please try again.');
     }
   };
@@ -90,7 +87,7 @@ const Login = () => {
               id="email"
               placeholder="Email"
               value={emailInput}
-              onChange={handleEmailChange}
+              onChange={(e) => setEmailInput(e.target.value)}
               required
             />
             <label htmlFor="password">Password</label>
@@ -111,21 +108,17 @@ const Login = () => {
               )}
             </div>
             <div className="forgot">
-              <Link to="/forgot-password" className="auth-link forgot-password">
-                Forgot Password?
-              </Link>
+              <Link to="/forgot-password" className="auth-link forgot-password">Forgot Password?</Link>
             </div>
             <button type="submit" className="sign-in" disabled={loading}>
               {loading ? 'LOGGING IN...' : 'LOG IN'}
             </button>
           </form>
           <div className="google-login">
-            <GoogleLogin onSuccess={handleGoogleLogin} onError={() => setError('Google login failed.')} />
+            <GoogleLogin onSuccess={handleGoogleLogin} onError={() => setError('Google login failed.')} useOneTap />
           </div>
           <div className="create-account">
-            <Link to="/create-account" className="auth-link create-account-btn">
-              Create Account
-            </Link>
+            <Link to="/create-account" className="auth-link create-account-btn">Create Account</Link>
             <a
               href="#"
               className="auth-link"

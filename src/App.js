@@ -1,6 +1,8 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
+import { UserProvider } from './contexts/UserContext';
+import { CartProvider } from './contexts/CartContext';
 import Login from './pages/Login';
 import CreateAccount from './pages/createaccount';
 import ForgotPassword from './pages/forgotpassword';
@@ -17,29 +19,25 @@ import Wishlist from './pages/wishlist';
 import Settings from './pages/settings';
 import Payment from './pages/payment';
 import Checkout from './pages/checkOut';
-import Cart from './pages/Cart';
 import SubcategoryPage from './pages/SubcategoryPage';
 import AboutFAQs from './pages/AboutFAQs';
-import { UserProvider } from './contexts/UserContext';
 import ProtectedRoute from './components/ProtectedRoute';
-import { CartProvider } from './contexts/CartContext';
 import AdminDashboard from './components/AdminDashboard';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import './styles/Responsive.css';
 import './App.css';
 
-// Make sure this is set in your .env file
 const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
 
 const AppLayout = () => {
   const location = useLocation();
   const path = location.pathname;
 
-  const hideNavbarFooter = 
-    path.includes('/admin') || 
-    path === '/login' || 
-    path === '/create-account' || 
+  const hideNavbarFooter =
+    path.includes('/admin') ||
+    path === '/login' ||
+    path === '/create-account' ||
     path === '/forgot-password';
 
   return (
@@ -59,14 +57,14 @@ const AppLayout = () => {
         <Route path="/plushies" element={<Plushies />} />
         <Route path="/varieties" element={<Varieties />} />
         <Route path="/:category/:subcategory" element={<SubcategoryPage />} />
-        
+
         {/* Admin routes */}
         <Route path="/admin/*" element={
           <ProtectedRoute adminOnly={true}>
             <AdminDashboard />
           </ProtectedRoute>
         } />
-        
+
         {/* User-only routes */}
         <Route path="/profile" element={
           <ProtectedRoute>
