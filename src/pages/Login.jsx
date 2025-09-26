@@ -96,27 +96,28 @@ const Login = () => {
   // Google Login
   // -------------------------
   const handleGoogleLogin = async (credentialResponse) => {
-    setLoading(true);
-    setError('');
-    try {
-      const res = await fetch(`${API_URL}/api/auth/google-login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: credentialResponse.credential }),
-      });
+  setLoading(true);
+  setError('');
 
-      if (!res.ok) throw new Error('Google login failed');
-      const data = await res.json();
+  try {
+    const res = await fetch(`${API_URL}/api/auth/google-login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: credentialResponse.credential }),
+    });
 
-      await login(data);
-      navigate('/');
-    } catch (err) {
-      console.error('Google login error:', err);
-      setError('Google login failed. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
+    if (!res.ok) throw new Error('Google login failed');
+    const data = await res.json();
+
+    await login(data); // save user in context
+    navigate('/'); // redirect after login
+  } catch (err) {
+    console.error('Google login error:', err);
+    setError('Google login failed. Please try again.');
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="login-container">
@@ -172,9 +173,9 @@ const Login = () => {
 
               <div className="google-login">
                 <GoogleLogin
-                  onSuccess={handleGoogleLogin}
-                  onError={() => setError('Google login failed. Please try again.')}
-                  useOneTap
+                onSuccess={handleGoogleLogin}
+                onError={() => setError('Google login failed. Please try again.')}
+                useOneTap
                 />
               </div>
             </div>
