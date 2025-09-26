@@ -15,14 +15,17 @@ const normalizeImagePath = (path) => {
 const ProductPage = () => {
   const { productId } = useParams();
   const navigate = useNavigate();
-  const { addToCart } = useCart();
+  const { addToCart, user } = useCart(); // Add cart functions
+  const { user: currentUser } = useUser(); // Observe user context
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [showQuantityPrompt, setShowQuantityPrompt] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const { user, isGuest } = useUser();
+
+  // Compute isGuest dynamically from context
+  const isGuest = !currentUser || currentUser.isGuest;
 
   // Fetch product data
   useEffect(() => {
@@ -61,11 +64,6 @@ const ProductPage = () => {
   };
 
   const confirmAddToCart = async () => {
-    if (typeof addToCart !== 'function') {
-      console.error('addToCart is not available');
-      return;
-    }
-
     try {
       await addToCart(product, quantity);
       setShowQuantityPrompt(false);
@@ -76,7 +74,7 @@ const ProductPage = () => {
     }
   };
 
-  // ✅ Build category + genre links
+  // Build category + genre links
   const categoryLink = `/${product.category}`;
   const genreLink = product.subcategory ? `/${product.category}/${product.subcategory}` : null;
 
@@ -128,10 +126,11 @@ const ProductPage = () => {
             </div>
 
             <div className="product-actions">
+              {/* ✅ Dynamic button based on login */}
               {isGuest ? (
                 <div className="guest-message">
                   <p>Please sign in to add items to your cart</p>
-                  <Link to="/" className="sign-in-button">Sign In</Link>
+                  <Link to="/login" className="sign-in-button">Sign In</Link>
                 </div>
               ) : product.countInStock > 0 ? (
                 <button className="add-to-cart-btn" onClick={handleAddToCartClick}>
@@ -146,7 +145,7 @@ const ProductPage = () => {
                 <div className="disclaimer-overlay">
                   <div className="disclaimer-box">
                     <h6 className="disclaimer-header">Select Quantity</h6>
-                    <p>User ID: <strong>{isGuest ? 'Guest' : user._id}</strong></p>
+                    <p>User ID: <strong>{isGuest ? 'Guest' : currentUser._id}</strong></p>
                     <p>Product ID: <strong>{productId}</strong></p>
                     <input
                       type="number"
