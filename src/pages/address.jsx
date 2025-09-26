@@ -3,6 +3,7 @@ import { FaHeart, FaCog,FaUser, FaCreditCard, FaMapMarkerAlt } from 'react-icons
 import { Link } from 'react-router-dom';
 import './profile.css';
 import { useUser } from '../contexts/UserContext';
+import { RENDER_URL } from '../../config/urls';
 
 const Address = () => {
     const { user, updateUser, setUser } = useUser();
@@ -54,7 +55,7 @@ const Address = () => {
             }
 
             setIsLoading(true);
-            const response = await fetch('https://bookstore-0hqj.onrender.com/api/users/profile', {
+            const response = await fetch(`${RENDER_URL}/api/users/profile`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -111,13 +112,13 @@ const Address = () => {
                 throw new Error('You must be logged in to update your address');
             }
 
-            console.log("Sending update to:", 'https://bookstore-0hqj.onrender.com/api/users/update-address');
+            console.log("Sending update to:", `${RENDER_URL}/api/users/update-address`);
             console.log("With payload:", {
                 userId: user._id,
                 address: formData
             });
 
-            const response = await fetch('https://bookstore-0hqj.onrender.com/api/users/update-address', {
+            const response = await fetch(`${RENDER_URL}/api/users/update-address`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useUser } from '../contexts/UserContext';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import { RENDER_URL } from '../../config/urls';
 import './Login.css';
 
 const Login = () => {
@@ -47,7 +48,7 @@ const Login = () => {
         }
 
         try {
-            const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://bookstore-0hqj.onrender.com';
+            const API_URL = process.env.NEXT_PUBLIC_API_URL || RENDER_URL;
 
             // 1. Login to get token
             const response = await fetch(`${API_URL}/api/auth/login`, {

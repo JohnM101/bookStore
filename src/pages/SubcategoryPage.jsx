@@ -43,7 +43,6 @@ const SubcategoryPage = () => {
         const fetchProducts = async () => {
             try {
                 console.log('Starting to fetch products...');
-                //const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://animeyoubackend.onrender.com';
                 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://bookstore-0hqj.onrender.com'
                 // Get user and token from localStorage
                 const user = JSON.parse(localStorage.getItem('user'));

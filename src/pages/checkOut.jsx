@@ -5,6 +5,8 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './checkOut.css';
 import { useCart } from '../contexts/CartContext';
+import { RENDER_URL } from '../../config/urls';
+
 
 const Checkout = () => {
   const location = useLocation();
@@ -98,7 +100,7 @@ const Checkout = () => {
         }
       };
 
-      const response = await axios.post('https://bookstore-0hqj.onrender.com/api/orders', orderData, config);
+      const response = await axios.post(`${RENDER_URL}/api/orders`, orderData, config);
 
       if (response.data) {
         // Clear cart from localStorage

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import './categories.css';
+import { RENDER_URL } from '../../config/urls';
 
 const Clothing = () => {
     const navigate = useNavigate();
@@ -14,8 +15,7 @@ const Clothing = () => {
             try {
                 setLoading(true);
                 // Use the direct fetch approach
-                //const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://animeyoubackend.onrender.com';
-                const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://bookstore-0hqj.onrender.com'
+                const API_URL = process.env.NEXT_PUBLIC_API_URL || RENDER_URL;
                 // Get user and token from localStorage
                 const user = JSON.parse(localStorage.getItem('user'));
                 const token = user ? user.token : null;
