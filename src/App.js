@@ -31,7 +31,7 @@ import './styles/Responsive.css';
 import './App.css';
 
 // Add your Google Client ID here (from .env)
-const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 
 const AppLayout = () => {
   const location = useLocation();
