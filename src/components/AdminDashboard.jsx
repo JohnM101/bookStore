@@ -1,68 +1,25 @@
-// AdminDashboard.jsx
+// src/components/AdminDashboard.jsx
 import React, { useState, useEffect } from 'react';
 import { Link, Route, Routes, useNavigate } from 'react-router-dom';
 import { useUser } from '../contexts/UserContext';
 import UserManagement from './admin/UserManagement';
 import OrderManagement from './admin/OrderManagement';
 import { FaSignOutAlt } from 'react-icons/fa';
-import { CATEGORIES } from '../../data/categories';
+import { CATEGORIES } from '../data/categories';
 import './AdminDashboard.css';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://bookstore-0hqj.onrender.com';
 
-const CATEGORIES = [
-  'Kids Manga',
-  'Young Boys Manga',
-  'Young Girls Manga',
-];
-
-
-const SUBCATEGORIES = {
-  'Kids Manga': ['Adventure', 'Animal-Slice of Life', 'Comedy', 'Fantasy'],
-  'Young Boys Manga': ['Action-Fighting', 'Adventure', 'Fantasy-Supernatural', 'Sports-Competition'],
-  'Young Girls Manga': ['Drama-Slice of Life', 'Magical Girl-Fantasy', 'Romance', 'School Life-Friendship'],
-};
-
-
 const convertToUrlFormat = (subcategoryName) => {
-  // Handle special cases first
-  const specialCases = {
-    // Kids Manga
-    'Adventure': 'adventure',
-    'Animal-Slice of Life': 'animalsliceoflife',
-    'Comedy': 'comedy',
-    'Fantasy': 'fantasy',
-
-
-    // Young Boys Manga
-    'Action-Fighting': 'actionfighting',
-    'Fantasy-Supernatural': 'fantasysupernatural',
-    'Sports-Competition': 'sportscompetition',
-
-
-    // Young Girls Manga
-    'Drama-Slice of Life': 'dramasliceoflife',
-    'Magical Girl-Fantasy': 'magicalgirlfantasy',
-    'Romance': 'romance',
-    'School Life-Friendship': 'schoollifefriendship',
-  };
-
-
-  if (specialCases[subcategoryName]) {
-    return specialCases[subcategoryName];
-  }
-
-
-  // Default conversion: lowercase and remove spaces/special characters
+  // Lowercase and remove non-alphanumeric characters for URL
   return subcategoryName.toLowerCase().replace(/[^a-z0-9]/g, '');
 };
-
 
 const ProductManagement = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentProduct, setCurrentProduct] = useState(null);
-  const { user } = useUser(); // Get user with token
+  const { user } = useUser();
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -74,7 +31,7 @@ const ProductManagement = () => {
   });
   const [isEditing, setIsEditing] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
-  const [tableKey, setTableKey] = useState(0); // Add this state for forcing table re-render
+  const [tableKey, setTableKey] = useState(0);
 
   useEffect(() => {
     fetchProducts();
@@ -83,16 +40,12 @@ const ProductManagement = () => {
   const fetchProducts = async () => {
     try {
       const response = await fetch(`${API_URL}/api/admin/products`, {
-        headers: {
-          'Authorization': `Bearer ${user.token}` // Add token
-        }
+        headers: { Authorization: `Bearer ${user.token}` }
       });
       if (!response.ok) throw new Error('Failed to fetch products');
-      
       const data = await response.json();
-      console.log("Fetched products:", data);
       setProducts(data);
-      setTableKey(prevKey => prevKey + 1); // Increment key to force re-render
+      setTableKey(prev => prev + 1);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -102,30 +55,16 @@ const ProductManagement = () => {
 
   const handleInputChange = (e) => {
     const { name, value, files } = e.target;
-    
+
     if (name === 'image' && files.length > 0) {
-      // For file inputs
       const file = files[0];
-      setFormData({
-        ...formData,
-        [name]: file
-      });
-      
-      // Create preview URL
+      setFormData({ ...formData, [name]: file });
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result);
-      };
+      reader.onloadend = () => setImagePreview(reader.result);
       reader.readAsDataURL(file);
     } else if (name === 'category') {
-      // When category changes, reset subcategory
-      setFormData({
-        ...formData,
-        [name]: value,
-        subcategory: '' // Reset subcategory when category changes
-      });
+      setFormData({ ...formData, category: value, subcategory: '' });
     } else {
-      // For other inputs
       setFormData({
         ...formData,
         [name]: name === 'price' || name === 'countInStock' ? parseFloat(value) : value
@@ -135,71 +74,41 @@ const ProductManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
     try {
-      const url = isEditing 
+      const url = isEditing
         ? `${API_URL}/api/admin/products/${currentProduct._id}`
         : `${API_URL}/api/admin/products`;
-      
       const method = isEditing ? 'PUT' : 'POST';
-      
-      // Create FormData object to handle file uploads
+
       const productData = new FormData();
       productData.append('name', formData.name);
       productData.append('description', formData.description);
       productData.append('price', formData.price);
-      productData.append('category', formData.category.toLowerCase());
-      productData.append('subcategory', convertToUrlFormat(formData.subcategory));
+      productData.append('category', formData.category);
+      productData.append('subcategory', formData.subcategory);
       productData.append('countInStock', formData.countInStock);
-      
-      // Only append image if it's a new file (not a URL string)
+
       if (formData.image instanceof File) {
         productData.append('image', formData.image);
       } else if (isEditing && currentProduct.image) {
-        // When editing, pass the existing image URL if no new file selected
         productData.append('imageUrl', currentProduct.image);
       }
-      
-      console.log("Submitting form data:", {
-        name: formData.name,
-        description: formData.description,
-        price: formData.price,
-        category: formData.category.toLowerCase(),
-        subcategory: convertToUrlFormat(formData.subcategory),
-        countInStock: formData.countInStock,
-        imageType: typeof formData.image,
-        isFile: formData.image instanceof File,
-        imageUrl: typeof formData.image === 'string' ? formData.image : 'No string image'
-      });
 
-      
       const response = await fetch(url, {
         method,
-        headers: {
-          'Authorization': `Bearer ${user.token}` // Add token
-        },
+        headers: { Authorization: `Bearer ${user.token}` },
         body: productData
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Server response:', errorText);
-        throw new Error(`Failed to ${isEditing ? 'update' : 'create'} product: ${response.statusText}`);
-      }
-      
-      console.log("Product updated successfully, refreshing data");
-      
-      // Reset form and refresh products
+      if (!response.ok) throw new Error(`Failed to ${isEditing ? 'update' : 'create'} product`);
       resetForm();
-      await fetchProducts(); // Wait for products to be fetched
-      
+      await fetchProducts();
     } catch (error) {
       console.error('Error saving product:', error);
     }
   };
 
   const handleEdit = (product) => {
-    console.log("Editing product:", product);
     setCurrentProduct(product);
     setFormData({
       name: product.name,
@@ -216,17 +125,12 @@ const ProductManagement = () => {
 
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this product?')) return;
-    
     try {
       const response = await fetch(`${API_URL}/api/admin/products/${id}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${user.token}` // Add token
-        }
+        headers: { Authorization: `Bearer ${user.token}` }
       });
-
       if (!response.ok) throw new Error('Failed to delete product');
-      
       fetchProducts();
     } catch (error) {
       console.error('Error deleting product:', error);
@@ -243,12 +147,15 @@ const ProductManagement = () => {
       image: null,
       countInStock: ''
     });
-    setImagePreview(null)
+    setImagePreview(null);
     setCurrentProduct(null);
     setIsEditing(false);
   };
 
   if (loading) return <div className="loading">Loading...</div>;
+
+  const selectedCategory = CATEGORIES.find(c => c.slug === formData.category);
+  const subcategories = selectedCategory?.subcategories || [];
 
   return (
     <div className="admin-container">
@@ -257,49 +164,22 @@ const ProductManagement = () => {
         <form onSubmit={handleSubmit} className="product-form">
           <div className="form-group">
             <label htmlFor="name">Product Name</label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleInputChange}
-              required
-            />
+            <input type="text" id="name" name="name" value={formData.name} onChange={handleInputChange} required />
           </div>
-          
+
           <div className="form-group">
             <label htmlFor="description">Description</label>
-            <textarea
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleInputChange}
-              required
-            />
+            <textarea id="description" name="description" value={formData.description} onChange={handleInputChange} required />
           </div>
-          
+
           <div className="form-group">
             <label htmlFor="price">Price</label>
-            <input
-              type="number"
-              id="price"
-              name="price"
-              step="0.01"
-              value={formData.price}
-              onChange={handleInputChange}
-              required
-            />
+            <input type="number" id="price" name="price" step="0.01" value={formData.price} onChange={handleInputChange} required />
           </div>
-          
+
           <div className="form-group">
             <label htmlFor="category">Category</label>
-            <select
-              id="category"
-              name="category"
-              value={formData.category}
-              onChange={handleInputChange}
-              required
-            >
+            <select id="category" name="category" value={formData.category} onChange={handleInputChange} required>
               <option value="" disabled>Select a category</option>
               {CATEGORIES.map(cat => (
                 <option key={cat.slug} value={cat.slug}>{cat.name}</option>
@@ -318,58 +198,30 @@ const ProductManagement = () => {
               disabled={!formData.category}
             >
               <option value="" disabled>Select a subcategory</option>
-              {formData.category &&
-                CATEGORIES.find(c => c.slug === formData.category)?.subcategories.map(sub => (
-                  <option key={sub.slug} value={sub.slug}>{sub.name}</option>
-                ))
-              }
+              {subcategories.map(sub => (
+                <option key={sub.slug} value={sub.slug}>{sub.name}</option>
+              ))}
             </select>
           </div>
 
-
           <div className="form-group">
             <label htmlFor="image">Product Image</label>
-            <input
-              type="file"
-              id="image"
-              name="image"
-              accept="image/*"
-              onChange={handleInputChange}
-              required={!isEditing}
-            />
-            {imagePreview && (
-              <div className="image-preview">
-                <img src={imagePreview} alt="Preview" />
-              </div>
-            )}
+            <input type="file" id="image" name="image" accept="image/*" onChange={handleInputChange} required={!isEditing} />
+            {imagePreview && <div className="image-preview"><img src={imagePreview} alt="Preview" /></div>}
           </div>
 
-          
           <div className="form-group">
             <label htmlFor="countInStock">Count In Stock</label>
-            <input
-              type="number"
-              id="countInStock"
-              name="countInStock"
-              value={formData.countInStock}
-              onChange={handleInputChange}
-              requiredd
-            />
+            <input type="number" id="countInStock" name="countInStock" value={formData.countInStock} onChange={handleInputChange} />
           </div>
-          
+
           <div className="form-buttons">
-            <button type="submit" className="btn-submit">
-              {isEditing ? 'Update Product' : 'Add Product'}
-            </button>
-            {isEditing && (
-              <button type="button" className="btn-cancel" onClick={resetForm}>
-                Cancel
-              </button>
-            )}
+            <button type="submit" className="btn-submit">{isEditing ? 'Update Product' : 'Add Product'}</button>
+            {isEditing && <button type="button" className="btn-cancel" onClick={resetForm}>Cancel</button>}
           </div>
         </form>
       </div>
-      
+
       <div className="products-list-container">
         <h2>Product List</h2>
         <div className="products-list">
@@ -386,41 +238,23 @@ const ProductManagement = () => {
               </tr>
             </thead>
             <tbody>
-              {products && products.length > 0 ? (
+              {products.length > 0 ? (
                 products.map(product => (
                   <tr key={product._id}>
-                    <td>
-                      <img 
-                        src={product.image} 
-                        alt={product.name} 
-                        className="product-thumbnail" 
-                      />
-                    </td>
+                    <td><img src={product.image} alt={product.name} className="product-thumbnail" /></td>
                     <td>{product.name}</td>
                     <td>{product.category}</td>
                     <td>{product.subcategory}</td>
                     <td>₱{product.price.toFixed(2)}</td>
                     <td>{product.countInStock}</td>
                     <td className="actions">
-                      <button 
-                        className="btn-edit" 
-                        onClick={() => handleEdit(product)}
-                      >
-                        Edit
-                      </button>
-                      <button 
-                        className="btn-delete" 
-                        onClick={() => handleDelete(product._id)}
-                      >
-                        Delete
-                      </button>
+                      <button className="btn-edit" onClick={() => handleEdit(product)}>Edit</button>
+                      <button className="btn-delete" onClick={() => handleDelete(product._id)}>Delete</button>
                     </td>
                   </tr>
                 ))
               ) : (
-                <tr>
-                  <td colSpan="6" className="no-products">No products found</td>
-                </tr>
+                <tr><td colSpan="7" className="no-products">No products found</td></tr>
               )}
             </tbody>
           </table>
@@ -431,28 +265,19 @@ const ProductManagement = () => {
 };
 
 const AdminDashboard = () => {
-  const { isAdmin, user, logout } = useUser();
+  const { isAdmin, logout } = useUser();
   const navigate = useNavigate();
-  
-  useEffect(() => {
-    // Redirect non-admin users
-    if (!isAdmin()) {
-      navigate('/home-page');
-    }
-  }, [isAdmin, navigate]);
 
-  if (!isAdmin()) {
-    return <div>Access Denied</div>;
-  }
+  useEffect(() => {
+    if (!isAdmin()) navigate('/');
+  }, [isAdmin, navigate]);
 
   const handleLogout = () => {
     logout();
     navigate('/');
   };
 
-  if (!isAdmin()) {
-    return <div>Access Denied</div>;
-  }
+  if (!isAdmin()) return <div>Access Denied</div>;
 
   return (
     <div className="admin-dashboard">
@@ -465,10 +290,8 @@ const AdminDashboard = () => {
             <li><Link to="/admin/orders">Orders</Link></li>
           </ul>
         </nav>
-      <div className="admin-logout">
-          <button onClick={handleLogout} className="logout-btn">
-            <FaSignOutAlt /> Logout
-          </button>
+        <div className="admin-logout">
+          <button onClick={handleLogout} className="logout-btn"><FaSignOutAlt /> Logout</button>
         </div>
       </div>
 
@@ -484,5 +307,4 @@ const AdminDashboard = () => {
   );
 };
 
-console.log('AdminDashboard loaded');
 export default AdminDashboard;
