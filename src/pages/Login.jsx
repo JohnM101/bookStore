@@ -140,7 +140,7 @@ const Login = () => {
                         </div>
                         <div className="login-options">
                             <button type="submit" className="sign-in" disabled={loading}>
-                                {loading ? 'SIGNING IN...' : 'SIGN IN'}
+                                {loading ? 'LOGING IN...' : 'LOG IN'}
                             </button>
                         </div>
                         <div className="create-account">
