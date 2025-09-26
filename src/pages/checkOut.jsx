@@ -5,7 +5,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './checkOut.css';
 import { useCart } from '../contexts/CartContext';
-const RENDER_URL = process.env.REACT_APP_RENDER_URL;
+//const RENDER_URL = process.env.REACT_APP_RENDER_URL;
 
 
 const Checkout = () => {
@@ -100,7 +100,7 @@ const Checkout = () => {
         }
       };
 
-      const response = await axios.post(`${RENDER_URL}/api/orders`, orderData, config);
+      const response = await axios.post(`https://bookstore-0hqj.onrender.com/api/orders`, orderData, config);
 
       if (response.data) {
         // Clear cart from localStorage
