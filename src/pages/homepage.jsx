@@ -17,43 +17,35 @@ const Homepage = () => {
   const [productData, setProductData] = useState({});
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-
   const user = JSON.parse(localStorage.getItem('user'));
 
-  // Check disclaimer flag on first render
   useEffect(() => {
     const hasSeenDisclaimer = localStorage.getItem('hasSeenDisclaimer');
-    if (!hasSeenDisclaimer) {
-      setShowDisclaimer(true);
-    }
+    if (!hasSeenDisclaimer) setShowDisclaimer(true);
   }, []);
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const API_URL =
-          process.env.NEXT_PUBLIC_API_URL || 'https://bookstore-0hqj.onrender.com';
-        const token = user ? user.token : null;
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://bookstore-0hqj.onrender.com';
+        const token = user?.token || null;
 
         const response = await fetch(`${API_URL}/api/admin/products`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         });
 
         if (!response.ok) throw new Error('Failed to fetch products');
 
         const products = await response.json();
 
-        // Group products by category slug
-        const categorizedProducts = products.reduce((acc, product) => {
+        const categorized = products.reduce((acc, product) => {
           const categorySlug = product.category;
           if (!acc[categorySlug]) acc[categorySlug] = [];
           acc[categorySlug].push(product);
           return acc;
         }, {});
 
-        setProductData(categorizedProducts);
+        setProductData(categorized);
         setLoading(false);
       } catch (error) {
         console.error('Error fetching products:', error);
@@ -76,19 +68,34 @@ const Homepage = () => {
     setShowDisclaimer(false);
   };
 
-  // Helper to get category display name from slug
+  // Get display name from slug
   const getCategoryName = (slug) => {
     const category = CATEGORIES.find(c => c.slug === slug);
     return category ? category.name : slug;
   };
 
-  // Render product section
+  // Define dynamic colors per category
+  const CATEGORY_STYLES = {
+    'kids-manga': { background: '#f87171', border: '#ef4444', text: '#fff' },
+    'young-boys-manga': { background: '#60a5fa', border: '#3b82f6', text: '#fff' },
+    'young-girls-manga': { background: '#34d399', border: '#10b981', text: '#fff' },
+    // add more categories here
+  };
+
   const renderProductSection = (title, products, slug) => {
     if (!products || products.length === 0) return null;
 
+    const style = CATEGORY_STYLES[slug] || { background: '#1a1a1a', border: '#ff4081', text: '#fff' };
+
     return (
-      <div key={slug} className={`product-section ${slug}-section`}>
-        <h2>{title.toUpperCase()} ──────────────────────────────────</h2>
+      <div
+        key={slug}
+        className={`product-section ${slug}-section`}
+        style={{ backgroundColor: style.background, borderLeftColor: style.border }}
+      >
+        <h2 style={{ color: style.text }}>
+          {title.toUpperCase()} ──────────────────────────────────
+        </h2>
         <div className="product-list">
           {products.slice(0, 4).map((product) => (
             <div
@@ -98,14 +105,14 @@ const Homepage = () => {
             >
               <img src={product.image} alt={product.name} />
               <p className="product-name">{product.name}</p>
-              <p className="product-subtitle">
-                {product.description.substring(0, 30)}...
-              </p>
+              <p className="product-subtitle">{product.description.substring(0, 30)}...</p>
               <p className="price">₱{product.price?.toFixed(2) || 'N/A'}</p>
             </div>
           ))}
         </div>
-        <Link to={`/${slug}`} className="view-all">View All</Link>
+        <Link to={`/${slug}`} className="view-all" style={{ color: style.text }}>
+          View All
+        </Link>
       </div>
     );
   };
@@ -133,9 +140,7 @@ const Homepage = () => {
                 This bookstore is for educational purposes only.
               </p>
             )}
-            <button className="disclaimer-button" onClick={handleProceed}>
-              Proceed
-            </button>
+            <button className="disclaimer-button" onClick={handleProceed}>Proceed</button>
           </div>
         </div>
       )}
