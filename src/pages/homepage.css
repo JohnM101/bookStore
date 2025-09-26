@@ -7,7 +7,11 @@ body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   overflow-x: hidden; /* Prevent horizontal scrolling on mobile */
 }
-  
+
+.app {
+  padding-top: 85px; /* Match navbar height */
+}
+
 /* Carousel */
 .carousel {
   width: 100%;
