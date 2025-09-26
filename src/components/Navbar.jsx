@@ -21,36 +21,33 @@ const Navbar = () => {
       
       <ul className="nav-links">
         <li>
-          <Link to="/desktop">DESKTOP</Link>
+          <Link to="/kidsManga">KIDS MANGA</Link>
           <ul className="dropdown-menu">
-            <li><Link to="/desktop/mousepad">Mousepads</Link></li>
-            <li><Link to="/desktop/deskorganizers">Desk Organizers</Link></li>
-            <li><Link to="/desktop/wallart">Wall Art</Link></li>
-            <li><Link to="/desktop/desklamps">Desk Lamps</Link></li>
-            <li><Link to="/desktop/coasters">Coasters</Link></li>
+            <li><Link to="/kidsManga/adventure">Adventure</Link></li>
+            <li><Link to="/kidsManga/animalSliceOfLife">Animal Slice of Life</Link></li>
+            <li><Link to="/kidsManga/comedy">Comedy</Link></li>
+            <li><Link to="/kidsManga/fantasy">Fantasy</Link></li>
           </ul>
         </li>
         <li>
-          <Link to="/figurines">FIGURINES</Link>
+          <Link to="/youngBoysManga">YOUNG BOYS MANGA</Link>
           <ul className="dropdown-menu">
-            <li><Link to="/figurines/figures">Scaled Figures</Link></li>
-            <li><Link to="/figurines/nendoroids">Nendoroids</Link></li>
-            <li><Link to="/figurines/acrylic">Acrylic Stands</Link></li>
-            <li><Link to="/figurines/mini">Mini Figurines</Link></li>
-            <li><Link to="/figurines/gacha">Gachapons</Link></li>
+            <li><Link to="/youngBoysManga/actionFighting">Action Fighting</Link></li>
+            <li><Link to="/youngBoysManga/adventure">Adventure</Link></li>
+            <li><Link to="/youngBoysManga/fantasySupernatural">Fantasy Supernatural</Link></li>
+            <li><Link to="/youngBoysManga/sportsCompetition">Sports Competition</Link></li>
           </ul>
         </li>
         <li>
-          <Link to="/plushies">PLUSHIES</Link>
+          <Link to="/youngGirlsManga">YOUNG GIRLS MANGA</Link>
           <ul className="dropdown-menu">
-            <li><Link to="/plushies/animal">Animal Plushies</Link></li>
-            <li><Link to="/plushies/character">Character Plushies</Link></li>
-            <li><Link to="/plushies/keychain">Keychain Plushies</Link></li>
-            <li><Link to="/plushies/pillow">Pillow Plushies</Link></li>
-            <li><Link to="/plushies/blanket">Blanket Plushies</Link></li>
+            <li><Link to="/youngGirlsManga/dramaSliceOfLife">Drama-Slice of Life</Link></li>
+            <li><Link to="/youngGirlsManga/magicalGirlFantasy">Magical Girl Fantasy</Link></li>
+            <li><Link to="/youngGirlsManga/romance">Romance</Link></li>
+            <li><Link to="/youngGirlsManga/schoolLifeFriendship">School Life Friendship</Link></li>
           </ul>
         </li>
-        <li>
+        {/* <li>
           <Link to="/clothing">CLOTHING</Link>
           <ul className="dropdown-menu">
             <li><Link to="/clothing/t-shirts">T-Shirts</Link></li>
@@ -69,7 +66,7 @@ const Navbar = () => {
             <li><Link to="/varieties/novels">Light Novels</Link></li>
             <li><Link to="/varieties/games">Videogames</Link></li>
           </ul>
-        </li>
+        </li> */}
       </ul>
       
       <div className="navbar-icons">
