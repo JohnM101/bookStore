@@ -33,6 +33,7 @@ import { CartProvider } from './contexts/CartContext';
 import AdminDashboard from './components/AdminDashboard';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import { CATEGORIES } from './data/categories';
 import './styles/Responsive.css';
 import './App.css';
 
@@ -63,7 +64,7 @@ const AppLayout = () => {
         <Route path="/kidsManga" element={<KidsManga />} />
         <Route path="/youngBoysManga" element={<YoungBoysManga />} />
         <Route path="/youngGirlsManga" element={<YoungGirlsManga />} />
-        <Route path="/:category/:subcategory" element={<SubcategoryPage />} />
+        <Route path="/:categorySlug/:subcategorySlug" element={<SubcategoryPage />} />
         
         {/* Admin routes */}
         <Route path="/admin/*" element={

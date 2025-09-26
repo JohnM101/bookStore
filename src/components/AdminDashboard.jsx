@@ -5,6 +5,7 @@ import { useUser } from '../contexts/UserContext';
 import UserManagement from './admin/UserManagement';
 import OrderManagement from './admin/OrderManagement';
 import { FaSignOutAlt } from 'react-icons/fa';
+import { CATEGORIES } from '../../data/categories';
 import './AdminDashboard.css';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://bookstore-0hqj.onrender.com';
@@ -300,10 +301,8 @@ const ProductManagement = () => {
               required
             >
               <option value="" disabled>Select a category</option>
-              {CATEGORIES.map(category => (
-                <option key={category} value={category}>
-                  {category}
-                </option>
+              {CATEGORIES.map(cat => (
+                <option key={cat.slug} value={cat.slug}>{cat.name}</option>
               ))}
             </select>
           </div>
@@ -319,12 +318,10 @@ const ProductManagement = () => {
               disabled={!formData.category}
             >
               <option value="" disabled>Select a subcategory</option>
-              {formData.category && SUBCATEGORIES[formData.category] ? 
-                SUBCATEGORIES[formData.category].map(subcategory => (
-                  <option key={subcategory} value={subcategory}>
-                    {subcategory}
-                  </option>
-                )) : null
+              {formData.category &&
+                CATEGORIES.find(c => c.slug === formData.category)?.subcategories.map(sub => (
+                  <option key={sub.slug} value={sub.slug}>{sub.name}</option>
+                ))
               }
             </select>
           </div>
