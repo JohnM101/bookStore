@@ -11,17 +11,17 @@ const Homepage = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+  // Get user details from localStorage
+  const user = JSON.parse(localStorage.getItem('user'));
+
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         console.log('Starting to fetch products...');
         const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://bookstore-0hqj.onrender.com';
         
-        // Get user and token from localStorage
-        const user = JSON.parse(localStorage.getItem('user'));
         const token = user ? user.token : null;
         
-        // Include the token in your request headers
         const response = await fetch(`${API_URL}/api/admin/products`, {
           headers: {
             'Authorization': `Bearer ${token}`
@@ -38,7 +38,6 @@ const Homepage = () => {
         console.log('Products from API:', products);
         console.log('Number of products received:', products.length);
         
-        // Organize products by category
         const categorizedProducts = products.reduce((acc, product) => {
           const category = product.category;
           if (!acc[category]) {
@@ -60,7 +59,7 @@ const Homepage = () => {
     };
     
     fetchProducts();
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -74,15 +73,25 @@ const Homepage = () => {
       <div className="disclaimer-overlay">
         <div className="disclaimer-box">
           <img src="/assets/logo.png" alt="Logo" className="disclaimer-logo" />
-          <h6 className="disclaimer-header">Disclaimer!</h6>
-          <p className="disclaimer-text">This is for educational purposes only.</p>
-          <button className="disclaimer-button" onClick={() => setShowDisclaimer(false)}>Proceed</button>
+          <h6 className="disclaimer-header">Welcome!</h6>
+          {user ? (
+            <>
+              <p className="disclaimer-text">
+                Hello <strong>{user.firstName} {user.lastName}</strong> ({user.email}) 👋
+              </p>
+              <p className="disclaimer-text">This bookstore is for educational purposes only.</p>
+            </>
+          ) : (
+            <p className="disclaimer-text">This bookstore is for educational purposes only.</p>
+          )}
+          <button className="disclaimer-button" onClick={() => setShowDisclaimer(false)}>
+            Proceed
+          </button>
         </div>
       </div>
     );
   }
 
-  //Loading Indicator
   if (loading) {
     return <div className="loading">Loading products...</div>;
   }
@@ -94,11 +103,11 @@ const Homepage = () => {
       <div className={`product-section ${title.toLowerCase()}-section`}>
         <h2>{title.toUpperCase()} ──────────────────────────────────</h2>
         <div className="product-list">
-          {products.slice(0, 4).map((product, index) => (
+          {products.slice(0, 4).map((product) => (
             <div 
               className="product-card" 
-              key={product._id} // Use MongoDB _id
-              onClick={() => navigate(`/product/${product._id}`)} // Use MongoDB _id
+              key={product._id}
+              onClick={() => navigate(`/product/${product._id}`)}
             >
               <img src={product.image} alt={product.name} />
               <p className="product-name">{product.name}</p>
@@ -111,10 +120,10 @@ const Homepage = () => {
       </div>
     );
   };  
-  
 
   return (
     <div className="app">      
+      <Navbar />
 
       {/* Carousel */}
       <div className="carousel">
