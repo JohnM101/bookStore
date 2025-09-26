@@ -1,8 +1,7 @@
-// pages/homepage.jsx
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import { CATEGORIES } from '../data/categories';
+import { CATEGORIES, CATEGORY_COLORS } from '../data/categories';
 import './homepage.css';
 
 const Homepage = () => {
@@ -12,23 +11,29 @@ const Homepage = () => {
     '/assets/Banner 4.png',
     '/assets/Banner 5.png'
   ];
+
   const [current, setCurrent] = useState(0);
   const [showDisclaimer, setShowDisclaimer] = useState(true);
   const [productData, setProductData] = useState({});
   const [loading, setLoading] = useState(true);
+
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user'));
 
+  // Check disclaimer flag on first render
   useEffect(() => {
     const hasSeenDisclaimer = localStorage.getItem('hasSeenDisclaimer');
-    if (!hasSeenDisclaimer) setShowDisclaimer(true);
+    if (!hasSeenDisclaimer) {
+      setShowDisclaimer(true);
+    }
   }, []);
 
+  // Fetch products
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://bookstore-0hqj.onrender.com';
-        const token = user?.token || null;
+        const token = user ? user.token : null;
 
         const response = await fetch(`${API_URL}/api/admin/products`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -38,14 +43,14 @@ const Homepage = () => {
 
         const products = await response.json();
 
-        const categorized = products.reduce((acc, product) => {
+        const categorizedProducts = products.reduce((acc, product) => {
           const categorySlug = product.category;
           if (!acc[categorySlug]) acc[categorySlug] = [];
           acc[categorySlug].push(product);
           return acc;
         }, {});
 
-        setProductData(categorized);
+        setProductData(categorizedProducts);
         setLoading(false);
       } catch (error) {
         console.error('Error fetching products:', error);
@@ -56,9 +61,10 @@ const Homepage = () => {
     fetchProducts();
   }, [user]);
 
+  // Carousel auto-slide
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrent((prev) => (prev + 1) % banners.length);
+      setCurrent(prev => (prev + 1) % banners.length);
     }, 4000);
     return () => clearInterval(interval);
   }, [banners.length]);
@@ -68,36 +74,31 @@ const Homepage = () => {
     setShowDisclaimer(false);
   };
 
-  // Get display name from slug
-  const getCategoryName = (slug) => {
+  // Helper to get category name
+  const getCategoryName = slug => {
     const category = CATEGORIES.find(c => c.slug === slug);
     return category ? category.name : slug;
   };
 
-  // Define dynamic colors per category
-  const CATEGORY_STYLES = {
-    'kids-manga': { background: '#f87171', border: '#ef4444', text: '#fff' },
-    'young-boys-manga': { background: '#60a5fa', border: '#3b82f6', text: '#fff' },
-    'young-girls-manga': { background: '#34d399', border: '#10b981', text: '#fff' },
-    // add more categories here
-  };
-
-  const renderProductSection = (title, products, slug) => {
+  // Render product section
+  const renderProductSection = (slug, products) => {
     if (!products || products.length === 0) return null;
 
-    const style = CATEGORY_STYLES[slug] || { background: '#1a1a1a', border: '#ff4081', text: '#fff' };
+    const bgColor = CATEGORY_COLORS[slug]?.bg || '#ccc';
+    const textColor = CATEGORY_COLORS[slug]?.text || '#fff';
 
     return (
       <div
         key={slug}
         className={`product-section ${slug}-section`}
-        style={{ backgroundColor: style.background, borderLeftColor: style.border }}
+        style={{
+          '--section-color': bgColor,
+          '--section-text-color': textColor,
+        }}
       >
-        <h2 style={{ color: style.text }}>
-          {title.toUpperCase()} ──────────────────────────────────
-        </h2>
+        <h2>{getCategoryName(slug).toUpperCase()} ──────────────────────────────</h2>
         <div className="product-list">
-          {products.slice(0, 4).map((product) => (
+          {products.slice(0, 4).map(product => (
             <div
               className="product-card"
               key={product._id || product.id}
@@ -110,7 +111,7 @@ const Homepage = () => {
             </div>
           ))}
         </div>
-        <Link to={`/${slug}`} className="view-all" style={{ color: style.text }}>
+        <Link to={`/${slug}`} className="view-all">
           View All
         </Link>
       </div>
@@ -131,14 +132,10 @@ const Homepage = () => {
                 <p className="disclaimer-text">
                   Hello <strong>{user.firstName} {user.lastName}</strong> ({user.email}) 👋
                 </p>
-                <p className="disclaimer-text">
-                  This bookstore is for educational purposes only.
-                </p>
+                <p className="disclaimer-text">This bookstore is for educational purposes only.</p>
               </>
             ) : (
-              <p className="disclaimer-text">
-                This bookstore is for educational purposes only.
-              </p>
+              <p className="disclaimer-text">This bookstore is for educational purposes only.</p>
             )}
             <button className="disclaimer-button" onClick={handleProceed}>Proceed</button>
           </div>
@@ -152,9 +149,7 @@ const Homepage = () => {
       {loading ? (
         <div className="loading">Loading products...</div>
       ) : (
-        Object.entries(productData).map(([slug, products]) =>
-          renderProductSection(getCategoryName(slug), products, slug)
-        )
+        Object.entries(productData).map(([slug, products]) => renderProductSection(slug, products))
       )}
     </div>
   );
