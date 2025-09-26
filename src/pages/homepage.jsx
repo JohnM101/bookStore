@@ -11,7 +11,7 @@ const Homepage = () => {
     '/assets/Banner 5.png'
   ];
   const [current, setCurrent] = useState(0);
-  const [showDisclaimer, setShowDisclaimer] = useState(false);
+  const [showDisclaimer, setShowDisclaimer] = useState(true);
   const [productData, setProductData] = useState({});
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
