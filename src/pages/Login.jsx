@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useUser } from '../contexts/UserContext';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
-import { RENDER_URL } from '../../config/urls';
+const RENDER_URL = process.env.REACT_APP_RENDER_URL;
 import './Login.css';
 
 const Login = () => {
