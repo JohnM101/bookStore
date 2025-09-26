@@ -16,52 +16,63 @@ const MangaCategoryPage = ({ baseCategory, heading }) => {
 
   const normalize = (str) => str?.toLowerCase().replace(/\s+/g, '-').trim();
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        setLoading(true);
-        const API_URL = process.env.NEXT_PUBLIC_API_URL || RENDER_URL;
-        const user = JSON.parse(localStorage.getItem('user'));
-        const token = user?.token || '';
-        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+useEffect(() => {
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || RENDER_URL;
 
-        const res = await fetch(`${API_URL}/api/admin/products`, { headers });
-        if (!res.ok) throw new Error('Failed to fetch products');
+      const user = JSON.parse(localStorage.getItem('user'));
+      const token = user?.token || '';
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-        const allProducts = await res.json();
+      console.log('Fetching products from:', `${API_URL}/api/admin/products`);
+      const res = await fetch(`${API_URL}/api/admin/products`, { headers });
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
 
-        // Filter products by base category and optional subcategory
-        const filteredProducts = allProducts.filter((product) => {
-          const productCat = normalize(product.category);
-          const productSub = normalize(product.subcategory);
-          const baseCat = normalize(baseCategory);
-          const subCat = normalize(subcategory);
+      const allProducts = await res.json();
+      console.log('All products fetched:', allProducts);
 
-          return subCat ? productCat === baseCat && productSub === subCat : productCat === baseCat;
-        });
+      const baseCatNorm = normalize(baseCategory);
+      const subCatNorm = normalize(subcategory);
 
-        setProductsData(filteredProducts);
+      const filteredProducts = allProducts.filter((product) => {
+        const productCat = normalize(product.category);
+        const productSub = normalize(product.subcategory);
 
-        // Build unique subcategory list
-        const uniqueSubcats = [
-          ...new Set(
-            allProducts
-              .filter((p) => normalize(p.category) === normalize(baseCategory))
-              .map((p) => p.subcategory)
-              .filter(Boolean)
-          ),
-        ];
-        setSubcategories(uniqueSubcats);
-      } catch (err) {
-        console.error(err);
-        setError('Failed to load products. Please try again later.');
-      } finally {
-        setLoading(false);
-      }
-    };
+        const match = subCatNorm
+          ? productCat === baseCatNorm && productSub === subCatNorm
+          : productCat === baseCatNorm;
 
-    fetchProducts();
-  }, [baseCategory, subcategory]);
+        console.log(
+          `Checking product: ${product.name}, category: ${productCat}, subcategory: ${productSub}, match: ${match}`
+        );
+
+        return match;
+      });
+
+      console.log('Filtered products:', filteredProducts);
+      setProductsData(filteredProducts);
+
+      const uniqueSubcats = [
+        ...new Set(
+          allProducts
+            .filter((p) => normalize(p.category) === baseCatNorm)
+            .map((p) => p.subcategory)
+            .filter(Boolean)
+        ),
+      ];
+      setSubcategories(uniqueSubcats);
+    } catch (err) {
+      console.error('Failed to fetch products:', err);
+      setError('Failed to load products. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchProducts();
+}, [baseCategory, subcategory]);
 
   const handleSortChange = (e) => setSortOption(e.target.value);
 
