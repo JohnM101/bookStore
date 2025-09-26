@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import './categories.css';
 
-const RENDER_URL = process.env.REACT_APP_RENDER_URL;
+//const RENDER_URL = process.env.REACT_APP_RENDER_URL;
 
 const MangaCategoryPage = ({ baseCategory, heading }) => {
   const navigate = useNavigate();
@@ -20,7 +20,7 @@ useEffect(() => {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || RENDER_URL;
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://bookstore-0hqj.onrender.com";
 
       const user = JSON.parse(localStorage.getItem('user'));
       const token = user?.token || '';
