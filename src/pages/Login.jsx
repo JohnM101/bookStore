@@ -6,11 +6,11 @@ import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google';
 import './Login.css';
 
-//const API_URL = "https://bookstore-0hqj.onrender.com"; // directly set instead of env
-//const GOOGLE_CLIENT_ID = "511179588658-8e82oafm9llk795hav0v46iccddngjj3.apps.googleusercontent.com";
-const RENDER_URL = process.env.REACT_APP_RENDER_URL;
-const API_URL = process.env.API_URL;
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+const API_URL = "https://bookstore-0hqj.onrender.com"; // directly set instead of env
+const GOOGLE_CLIENT_ID = "511179588658-8e82oafm9llk795hav0v46iccddngjj3.apps.googleusercontent.com";
+// const RENDER_URL = process.env.REACT_APP_RENDER_URL;
+// const API_URL = process.env.API_URL;
+// const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const Login = () => {
   const navigate = useNavigate();
   const { login, continueAsGuest } = useUser();
