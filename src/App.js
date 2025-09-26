@@ -1,4 +1,4 @@
-// App.js
+//App.js
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
@@ -8,6 +8,16 @@ import ForgotPassword from './pages/forgotpassword';
 import Homepage from './pages/homepage';
 import Profile from './pages/profile';
 
+// import Desktop from './pages/desktop';
+// import Clothing from './pages/clothing';
+// import Figurines from './pages/figurines';
+// import Plushies from './pages/plushies';
+// import Varieties from './pages/varieties';
+
+import KidsManga from './pages/kidsManga';
+import YoungBoysManga from './pages/youngBoysManga';
+import YoungGirlsManga from './pages/youngGirlsManga';
+
 import ProductPage from './pages/ProductPage';
 import Address from './pages/address';
 import Wishlist from './pages/wishlist';
@@ -15,6 +25,7 @@ import Settings from './pages/settings';
 import Payment from './pages/payment';
 import Checkout from './pages/checkOut';
 import Cart from './pages/Cart';
+import SubcategoryPage from './pages/SubcategoryPage';
 import AboutFAQs from './pages/AboutFAQs';
 import { UserProvider } from './contexts/UserContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -22,22 +33,21 @@ import { CartProvider } from './contexts/CartContext';
 import AdminDashboard from './components/AdminDashboard';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
-
-import MangaCategoryPage from './pages/MangaCategoryPage'; // ✅ NEW generic component
+import { CATEGORIES } from './data/categories';
 import './styles/Responsive.css';
 import './App.css';
 
-// Google Client ID
+// Add your Google Client ID here (from .env)
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 
 const AppLayout = () => {
   const location = useLocation();
   const path = location.pathname;
 
-  const hideNavbarFooter =
-    path.includes('/admin') ||
-    path === '/login' ||
-    path === '/create-account' ||
+  const hideNavbarFooter = 
+    path.includes('/admin') || 
+    path === '/login' || 
+    path === '/create-account' || 
     path === '/forgot-password';
 
   return (
@@ -51,104 +61,54 @@ const AppLayout = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/about-faqs" element={<AboutFAQs />} />
         <Route path="/product/:productId" element={<ProductPage />} />
-
-        {/* ✅ Kids Manga */}
-        <Route
-          path="/kids-manga"
-          element={<MangaCategoryPage baseCategory="kids-manga" heading="KIDS MANGA" />}
-        />
-        <Route
-          path="/kids-manga/:subcategory"
-          element={<MangaCategoryPage baseCategory="kids-manga" heading="KIDS MANGA" />}
-        />
-
-        {/* ✅ Young Boys Manga */}
-        <Route
-          path="/young-boys-manga"
-          element={<MangaCategoryPage baseCategory="young-boys-manga" heading="YOUNG BOYS MANGA" />}
-        />
-        <Route
-          path="/young-boys-manga/:subcategory"
-          element={<MangaCategoryPage baseCategory="young-boys-manga" heading="YOUNG BOYS MANGA" />}
-        />
-
-        {/* ✅ Young Girls Manga */}
-        <Route
-          path="/young-girls-manga"
-          element={<MangaCategoryPage baseCategory="young-girls-manga" heading="YOUNG GIRLS MANGA" />}
-        />
-        <Route
-          path="/young-girls-manga/:subcategory"
-          element={<MangaCategoryPage baseCategory="young-girls-manga" heading="YOUNG GIRLS MANGA" />}
-        />
-
+        <Route path="/kidsManga" element={<KidsManga />} />
+        <Route path="/youngBoysManga" element={<YoungBoysManga />} />
+        <Route path="/youngGirlsManga" element={<YoungGirlsManga />} />
+        <Route path="/:categorySlug/:subcategorySlug" element={<SubcategoryPage />} />
+        
         {/* Admin routes */}
-        <Route
-          path="/admin/*"
-          element={
-            <ProtectedRoute adminOnly={true}>
-              <AdminDashboard />
-            </ProtectedRoute>
-          }
-        />
-
+        <Route path="/admin/*" element={
+          <ProtectedRoute adminOnly={true}>
+            <AdminDashboard />
+          </ProtectedRoute>
+        } />
+        
         {/* User-only routes */}
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute>
-              <Profile />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/cart"
-          element={
-            <ProtectedRoute>
-              <Cart />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/checkout"
-          element={
-            <ProtectedRoute>
-              <Checkout />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/address"
-          element={
-            <ProtectedRoute>
-              <Address />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/wishlist"
-          element={
-            <ProtectedRoute>
-              <Wishlist />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/settings"
-          element={
-            <ProtectedRoute>
-              <Settings />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/payments"
-          element={
-            <ProtectedRoute>
-              <Payment />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/profile" element={
+          <ProtectedRoute>
+            <Profile />
+          </ProtectedRoute>
+        } />
+        <Route path="/cart" element={
+          <ProtectedRoute>
+            <Cart />
+          </ProtectedRoute>
+        } />
+        <Route path="/checkout" element={
+          <ProtectedRoute>
+            <Checkout />
+          </ProtectedRoute>
+        } />
+        <Route path="/address" element={
+          <ProtectedRoute>
+            <Address />
+          </ProtectedRoute>
+        } />
+        <Route path="/wishlist" element={
+          <ProtectedRoute>
+            <Wishlist />
+          </ProtectedRoute>
+        } />
+        <Route path="/settings" element={
+          <ProtectedRoute>
+            <Settings />
+          </ProtectedRoute>
+        } />
+        <Route path="/payments" element={
+          <ProtectedRoute>
+            <Payment />
+          </ProtectedRoute>
+        } />
       </Routes>
       {!hideNavbarFooter && <Footer />}
     </>
