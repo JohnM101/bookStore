@@ -6,6 +6,9 @@ import { FaShoppingCart, FaUser, FaSignInAlt } from 'react-icons/fa';
 import { CATEGORIES } from '../data/categories';
 import './Navbar.css';
 
+// Normalize strings for URLs
+const normalizeSlug = (str) => str?.toLowerCase().replace(/\s+/g, '-').trim();
+
 const Navbar = () => {
   const { user } = useUser();
   const userIsGuest = !user || user.isGuest;
@@ -21,11 +24,13 @@ const Navbar = () => {
       <ul className="nav-links">
         {CATEGORIES.map(category => (
           <li key={category.slug}>
-            <Link to={`/${category.slug}`}>{category.name.toUpperCase()}</Link>
+            <Link to={`/${normalizeSlug(category.slug)}`}>{category.name.toUpperCase()}</Link>
             <ul className="dropdown-menu">
               {category.subcategories.map(sub => (
                 <li key={sub.slug}>
-                  <Link to={`/${category.slug}/${sub.slug}`}>{sub.name}</Link>
+                  <Link to={`/${normalizeSlug(category.slug)}/${normalizeSlug(sub.slug)}`}>
+                    {sub.name}
+                  </Link>
                 </li>
               ))}
             </ul>

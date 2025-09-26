@@ -14,29 +14,34 @@ const MangaCategoryPage = ({ baseCategory, heading }) => {
   const [error, setError] = useState(null);
   const [sortOption, setSortOption] = useState('default');
 
+  // Normalize strings for comparison
+  const normalize = (str) => str?.toLowerCase().replace(/\s+/g, '-').trim();
+
   useEffect(() => {
     const loadProducts = async () => {
       try {
         setLoading(true);
         const API_URL = process.env.NEXT_PUBLIC_API_URL || RENDER_URL;
 
+        // Try fetching with token if available, else fetch public
         const user = JSON.parse(localStorage.getItem('user'));
-        const token = user ? user.token : null;
+        const token = user?.token || '';
 
-        const response = await fetch(`${API_URL}/api/admin/products`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+        const response = await fetch(`${API_URL}/api/admin/products`, { headers });
 
         if (!response.ok) throw new Error('Failed to fetch products');
 
         const allProducts = await response.json();
+        console.log("All products fetched:", allProducts);
 
-        // Normalize and filter products by baseCategory + optional subcategory
+        // Filter products by category & optional subcategory
         const filteredProducts = allProducts.filter((product) => {
-          const productCat = product.category?.toLowerCase().trim();
-          const productSub = product.subcategory?.toLowerCase().trim();
-          const baseCat = baseCategory.toLowerCase().trim();
-          const subCat = subcategory?.toLowerCase().trim();
+          const productCat = normalize(product.category);
+          const productSub = normalize(product.subcategory);
+          const baseCat = normalize(baseCategory);
+          const subCat = normalize(subcategory);
 
           if (subCat) {
             return productCat === baseCat && productSub === subCat;
@@ -45,15 +50,17 @@ const MangaCategoryPage = ({ baseCategory, heading }) => {
           }
         });
 
+        console.log("Filtered products:", filteredProducts);
         setProductsData(filteredProducts);
 
         // Build subcategory list dynamically
         const allSubcats = allProducts
-          .filter((product) => product.category?.toLowerCase().trim() === baseCategory.toLowerCase().trim())
-          .map((product) => product.subcategory?.trim())
-          .filter(Boolean); // remove null/empty
+          .filter((product) => normalize(product.category) === normalize(baseCategory))
+          .map((product) => product.subcategory)
+          .filter(Boolean);
 
-        setSubcategories([...new Set(allSubcats)]); // unique values
+        setSubcategories([...new Set(allSubcats)]);
+
       } catch (err) {
         console.error(`Failed to fetch products for ${baseCategory}:`, err);
         setError('Failed to load products. Please try again later.');
@@ -65,9 +72,7 @@ const MangaCategoryPage = ({ baseCategory, heading }) => {
     loadProducts();
   }, [baseCategory, subcategory]);
 
-  const handleSortChange = (e) => {
-    setSortOption(e.target.value);
-  };
+  const handleSortChange = (e) => setSortOption(e.target.value);
 
   const getSortedProducts = () => {
     switch (sortOption) {
@@ -88,7 +93,7 @@ const MangaCategoryPage = ({ baseCategory, heading }) => {
       <div className="product-section">
         <h2 className="section-heading">
           {heading}
-          {subcategory ? ` – ${subcategory.charAt(0).toUpperCase() + subcategory.slice(1)}` : ''}
+          {subcategory ? ` – ${subcategory.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}` : ''}
         </h2>
 
         {/* Subcategory navigation */}
@@ -99,10 +104,10 @@ const MangaCategoryPage = ({ baseCategory, heading }) => {
           {subcategories.map((sc) => (
             <Link
               key={sc}
-              to={`/${baseCategory}/${sc}`}
-              className={subcategory === sc ? 'active-subcat' : ''}
+              to={`/${baseCategory}/${normalize(sc)}`}
+              className={normalize(subcategory) === normalize(sc) ? 'active-subcat' : ''}
             >
-              {sc.charAt(0).toUpperCase() + sc.slice(1)}
+              {sc}
             </Link>
           ))}
         </div>
@@ -129,10 +134,7 @@ const MangaCategoryPage = ({ baseCategory, heading }) => {
                 <img
                   src={product.image}
                   alt={product.name}
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = '/assets/placeholder-image.png';
-                  }}
+                  onError={(e) => { e.target.onerror = null; e.target.src = '/assets/placeholder-image.png'; }}
                 />
                 <h3>{product.name}</h3>
                 <p className="price">₱{product.price?.toFixed(2) || 'N/A'}</p>
@@ -144,7 +146,6 @@ const MangaCategoryPage = ({ baseCategory, heading }) => {
         </div>
         <hr className="bottom-line" />
       </div>
-
       <div style={{ height: '200px' }}></div>
     </div>
   );
