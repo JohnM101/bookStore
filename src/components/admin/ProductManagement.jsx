@@ -1,3 +1,5 @@
+//ProductManagement.jsx
+
 import React, { useState, useEffect } from 'react';
 import { useUser } from '../../contexts/UserContext';
 import { CATEGORIES } from '../../data/categories';

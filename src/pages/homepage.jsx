@@ -4,12 +4,11 @@ import Navbar from '../components/Navbar';
 import { CATEGORIES } from '../data/categories';
 import './homepage.css';
 
-// Define dynamic colors directly in homepage.jsx
+// Define dynamic colors
 const CATEGORY_COLORS = {
   'kids-manga': { bg: '#f87171', text: '#fff' },
   'young-boys-manga': { bg: '#60a5fa', text: '#fff' },
   'young-girls-manga': { bg: '#34d399', text: '#fff' },
-  // add more categories here
 };
 
 const normalizeSlug = (str) => str?.toLowerCase().replace(/\s+/g, '-').trim();
@@ -28,17 +27,12 @@ const Homepage = () => {
     if (!localStorage.getItem('hasSeenDisclaimer')) setShowDisclaimer(true);
   }, []);
 
-  // Fetch products
+  // Fetch products from public route
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://bookstore-0hqj.onrender.com';
-        const token = user ? user.token : null;
-
-        const response = await fetch(`${API_URL}/api/admin/products`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
+        const response = await fetch(`${API_URL}/api/products`);
         if (!response.ok) throw new Error('Failed to fetch products');
 
         const products = await response.json();
@@ -58,13 +52,11 @@ const Homepage = () => {
       }
     };
     fetchProducts();
-  }, [user]);
+  }, []);
 
   // Carousel auto-slide
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrent(prev => (prev + 1) % banners.length);
-    }, 4000);
+    const interval = setInterval(() => setCurrent(prev => (prev + 1) % banners.length), 4000);
     return () => clearInterval(interval);
   }, [banners.length]);
 
@@ -88,10 +80,7 @@ const Homepage = () => {
       <div
         key={slug}
         className={`product-section ${slug}-section`}
-        style={{
-          '--section-color': bgColor,
-          '--section-text-color': textColor
-        }}
+        style={{ '--section-color': bgColor, '--section-text-color': textColor }}
       >
         <h2>{getCategoryName(slug).toUpperCase()} ──────────────────────────────</h2>
         <div className="product-list">
@@ -99,7 +88,7 @@ const Homepage = () => {
             <div
               className="product-card"
               key={product._id || product.id}
-              onClick={() => navigate(`/product/${product._id || product.id}`)}
+              onClick={() => navigate(`/product/${product.slug}`)} // use slug
             >
               <img src={product.image} alt={product.name} />
               <p className="product-name">{product.name}</p>

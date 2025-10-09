@@ -27,13 +27,16 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Create a new product
+// Create a new product with slug duplicate check
 router.post('/', async (req, res) => {
   try {
     const product = new Product(req.body);
     const savedProduct = await product.save();
     res.status(201).json(savedProduct);
   } catch (error) {
+    if (error.code === 11000) { // duplicate slug
+      return res.status(400).json({ message: 'Product with this name already exists.' });
+    }
     res.status(400).json({ message: error.message });
   }
 });

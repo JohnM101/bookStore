@@ -13,10 +13,10 @@ const normalizeImagePath = (path) => {
 };
 
 const ProductPage = () => {
-  const { productId } = useParams();
+  const { slug } = useParams();
   const navigate = useNavigate();
-  const { addToCart, user } = useCart(); // Add cart functions
-  const { user: currentUser } = useUser(); // Observe user context
+  const { addToCart } = useCart(); // Cart functions
+  const { user: currentUser } = useUser(); // User context
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -24,18 +24,20 @@ const ProductPage = () => {
   const [showQuantityPrompt, setShowQuantityPrompt] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
 
-  // Compute isGuest dynamically from context
   const isGuest = !currentUser || currentUser.isGuest;
 
-  // Fetch product data
+  // Fetch product by slug
   useEffect(() => {
     const fetchProduct = async () => {
       try {
         const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://bookstore-0hqj.onrender.com';
-        const res = await fetch(`${API_URL}/api/products/${productId}`);
+        const res = await fetch(`${API_URL}/api/products?slug=${slug}`);
         if (!res.ok) throw new Error('Product not found');
+
         const data = await res.json();
-        setProduct(data);
+        if (!data || data.length === 0) throw new Error('Product not found');
+
+        setProduct(data[0]);
         setLoading(false);
       } catch (err) {
         console.error(err);
@@ -44,7 +46,7 @@ const ProductPage = () => {
       }
     };
     fetchProduct();
-  }, [productId]);
+  }, [slug]);
 
   if (loading) return <div className="loading-container">Loading product details...</div>;
   if (error || !product)
@@ -74,9 +76,10 @@ const ProductPage = () => {
     }
   };
 
-  // Build category + genre links
-  const categoryLink = `/${product.category}`;
-  const genreLink = product.subcategory ? `/${product.category}/${product.subcategory}` : null;
+  const categoryLink = `/${product.category ? product.category.toLowerCase().replace(/\s+/g, '-') : ''}`;
+  const genreLink = product.subcategory
+    ? `/${product.category.toLowerCase().replace(/\s+/g, '-')}/${product.subcategory.toLowerCase().replace(/\s+/g, '-')}`
+    : null;
 
   return (
     <div className="app">
@@ -126,18 +129,21 @@ const ProductPage = () => {
             </div>
 
             <div className="product-actions">
-              {/* ✅ Dynamic button based on login */}
               {isGuest ? (
                 <div className="guest-message">
                   <p>Please sign in to add items to your cart</p>
-                  <Link to="/login" className="sign-in-button">Sign In</Link>
+                  <Link to="/login" className="sign-in-button">
+                    Sign In
+                  </Link>
                 </div>
               ) : product.countInStock > 0 ? (
                 <button className="add-to-cart-btn" onClick={handleAddToCartClick}>
                   Add to Cart
                 </button>
               ) : (
-                <button className="out-of-stock-btn" disabled>Out of Stock</button>
+                <button className="out-of-stock-btn" disabled>
+                  Out of Stock
+                </button>
               )}
 
               {/* Quantity Modal */}
@@ -146,7 +152,7 @@ const ProductPage = () => {
                   <div className="disclaimer-box">
                     <h6 className="disclaimer-header">Select Quantity</h6>
                     <p>User ID: <strong>{isGuest ? 'Guest' : currentUser._id}</strong></p>
-                    <p>Product ID: <strong>{productId}</strong></p>
+                    <p>Product Slug: <strong>{slug}</strong></p>
                     <input
                       type="number"
                       min="1"
@@ -156,8 +162,12 @@ const ProductPage = () => {
                       className="quantity-input"
                     />
                     <div className="modal-buttons">
-                      <button className="disclaimer-button cancel" onClick={() => setShowQuantityPrompt(false)}>Cancel</button>
-                      <button className="disclaimer-button" onClick={confirmAddToCart}>Confirm</button>
+                      <button className="disclaimer-button cancel" onClick={() => setShowQuantityPrompt(false)}>
+                        Cancel
+                      </button>
+                      <button className="disclaimer-button" onClick={confirmAddToCart}>
+                        Confirm
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -171,7 +181,9 @@ const ProductPage = () => {
                     <p className="disclaimer-text">
                       {product.name} (x{quantity}) has been added to your cart.
                     </p>
-                    <button className="disclaimer-button" onClick={() => setShowConfirmation(false)}>Continue Shopping</button>
+                    <button className="disclaimer-button" onClick={() => setShowConfirmation(false)}>
+                      Continue Shopping
+                    </button>
                   </div>
                 </div>
               )}

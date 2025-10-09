@@ -19,11 +19,8 @@ const MangaCategoryPage = ({ baseCategory, heading }) => {
         setLoading(true);
         const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://bookstore-0hqj.onrender.com";
 
-        const user = JSON.parse(localStorage.getItem('user'));
-        const token = user?.token || '';
-        const headers = token ? { Authorization: `Bearer ${token}` } : {};
-
-        const res = await fetch(`${API_URL}/api/admin/products`, { headers });
+        // Fetch from public products route
+        const res = await fetch(`${API_URL}/api/products`);
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
 
         const allProducts = await res.json();
@@ -89,13 +86,14 @@ const MangaCategoryPage = ({ baseCategory, heading }) => {
             <div
               className="product-card"
               key={product._id || product.id}
-              onClick={() => navigate(`/product/${product._id || product.id}`)}
+              onClick={() => navigate(`/product/${product.slug}`)} // use slug
             >
               <img src={product.image} alt={product.name} onError={(e) => { e.target.onerror = null; e.target.src = '/assets/placeholder-image.png'; }} />
               <p className="product-name">{product.name}</p>
               <p className="product-subtitle">{product.description?.substring(0, 30)}...</p>
               <p className="price">₱{product.price?.toFixed(2) || 'N/A'}</p>
             </div>
+
           ))}
         </div>
       </div>
