@@ -12,6 +12,7 @@ const ProductManagement = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [showOptional, setShowOptional] = useState(false);
   const [currentProduct, setCurrentProduct] = useState(null);
+  const [isSlugEdited, setIsSlugEdited] = useState(false);
 
   const [formData, setFormData] = useState({
     image: null,
@@ -46,14 +47,38 @@ const ProductManagement = () => {
     }
   };
 
+  const generateSlug = (text) => {
+    return text
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/--+/g, '-');
+  };
+
   const handleInputChange = (e) => {
     const { name, value, files } = e.target;
+
     if (name === 'image' && files.length > 0) {
       setFormData({ ...formData, image: files[0] });
       const reader = new FileReader();
       reader.onloadend = () => setImagePreview(reader.result);
       reader.readAsDataURL(files[0]);
-    } else setFormData({ ...formData, [name]: value });
+    } else {
+      let updatedData = { ...formData, [name]: value };
+
+      // Auto-generate slug from name if slug not manually edited
+      if (name === 'name' && !isSlugEdited) {
+        updatedData.slug = generateSlug(value);
+      }
+
+      // If user types in slug field, mark it as manually edited
+      if (name === 'slug') {
+        setIsSlugEdited(true);
+      }
+
+      setFormData(updatedData);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -76,7 +101,9 @@ const ProductManagement = () => {
       if (!res.ok) throw new Error('Failed to save');
       resetForm();
       fetchProducts();
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const handleEdit = (p) => {
@@ -97,6 +124,7 @@ const ProductManagement = () => {
     });
     setImagePreview(p.image);
     setIsEditing(true);
+    setIsSlugEdited(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -109,7 +137,9 @@ const ProductManagement = () => {
       });
       if (!res.ok) throw new Error('Delete failed');
       fetchProducts();
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const resetForm = () => {
@@ -127,6 +157,7 @@ const ProductManagement = () => {
       format: '',
       slug: ''
     });
+    setIsSlugEdited(false);
     setImagePreview(null);
     setCurrentProduct(null);
     setIsEditing(false);
