@@ -10,35 +10,27 @@ const ProductManagement = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showOptional, setShowOptional] = useState(false);
   const [currentProduct, setCurrentProduct] = useState(null);
-  const [tableKey, setTableKey] = useState(0);
+
   const [formData, setFormData] = useState({
+    image: null,
     name: '',
     description: '',
-    author: '',
-    publisher: '',
-    isbn: '',
-    publishedDate: '',
-    language: '',
-    price: '',
-    discountPrice: '',
-    countInStock: '',
-    sku: '',
     category: '',
     subcategory: '',
-    image: null,
-    images: [],
-    slug: '',
-    metaTitle: '',
-    metaDescription: ''
+    price: '',
+    countInStock: '',
+    seriesTitle: '',
+    volumeNumber: '',
+    publisher: '',
+    format: '',
+    slug: ''
   });
-  const [imagePreview, setImagePreview] = useState(null);
-  const [galleryPreview, setGalleryPreview] = useState([]);
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
+  const [imagePreview, setImagePreview] = useState(null);
+
+  useEffect(() => { fetchProducts(); }, []);
 
   const fetchProducts = async () => {
     try {
@@ -47,10 +39,9 @@ const ProductManagement = () => {
       });
       const data = await res.json();
       setProducts(data);
-      setTableKey((prev) => prev + 1);
+      setLoading(false);
     } catch (err) {
       console.error(err);
-    } finally {
       setLoading(false);
     }
   };
@@ -62,13 +53,7 @@ const ProductManagement = () => {
       const reader = new FileReader();
       reader.onloadend = () => setImagePreview(reader.result);
       reader.readAsDataURL(files[0]);
-    } else if (name === 'images' && files.length > 0) {
-      setFormData({ ...formData, images: files });
-      const previews = Array.from(files).map((file) => URL.createObjectURL(file));
-      setGalleryPreview(previews);
-    } else {
-      setFormData({ ...formData, [name]: value });
-    }
+    } else setFormData({ ...formData, [name]: value });
   };
 
   const handleSubmit = async (e) => {
@@ -80,40 +65,39 @@ const ProductManagement = () => {
       const method = isEditing ? 'PUT' : 'POST';
       const data = new FormData();
       for (const key in formData) {
-        if (key === 'images' && formData[key].length > 0) {
-          Array.from(formData[key]).forEach((file) => data.append('images', file));
-        } else if (key === 'image' && formData[key] instanceof File) {
-          data.append('image', formData[key]);
-        } else {
-          data.append(key, formData[key]);
-        }
+        if (key === 'image' && formData[key] instanceof File) data.append('image', formData[key]);
+        else data.append(key, formData[key]);
       }
-
       const res = await fetch(url, {
         method,
         headers: { Authorization: `Bearer ${user.token}` },
-        body: data,
+        body: data
       });
-
-      if (!res.ok) throw new Error('Failed to save product');
+      if (!res.ok) throw new Error('Failed to save');
       resetForm();
       fetchProducts();
-    } catch (err) {
-      console.error('Error saving product:', err);
-    }
+    } catch (err) { console.error(err); }
   };
 
-  const handleEdit = (product) => {
-    setIsEditing(true);
-    setCurrentProduct(product);
+  const handleEdit = (p) => {
+    setCurrentProduct(p);
     setFormData({
-      ...formData,
-      ...product,
-      image: product.image,
-      images: product.images || [],
+      image: p.image,
+      name: p.name,
+      description: p.description,
+      category: p.category,
+      subcategory: p.subcategory,
+      price: p.price,
+      countInStock: p.countInStock,
+      seriesTitle: p.seriesTitle || '',
+      volumeNumber: p.volumeNumber || '',
+      publisher: p.publisher || '',
+      format: p.format || '',
+      slug: p.slug || ''
     });
-    setImagePreview(product.image);
-    setGalleryPreview(product.images || []);
+    setImagePreview(p.image);
+    setIsEditing(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleDelete = async (id) => {
@@ -123,38 +107,30 @@ const ProductManagement = () => {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${user.token}` },
       });
-      if (!res.ok) throw new Error('Failed to delete product');
+      if (!res.ok) throw new Error('Delete failed');
       fetchProducts();
-    } catch (err) {
-      console.error(err);
-    }
+    } catch (err) { console.error(err); }
   };
 
   const resetForm = () => {
     setFormData({
+      image: null,
       name: '',
       description: '',
-      author: '',
-      publisher: '',
-      isbn: '',
-      publishedDate: '',
-      language: '',
-      price: '',
-      discountPrice: '',
-      countInStock: '',
-      sku: '',
       category: '',
       subcategory: '',
-      image: null,
-      images: [],
-      slug: '',
-      metaTitle: '',
-      metaDescription: ''
+      price: '',
+      countInStock: '',
+      seriesTitle: '',
+      volumeNumber: '',
+      publisher: '',
+      format: '',
+      slug: ''
     });
     setImagePreview(null);
-    setGalleryPreview([]);
     setCurrentProduct(null);
     setIsEditing(false);
+    setShowOptional(false);
   };
 
   const selectedCategory = CATEGORIES.find((c) => c.slug === formData.category);
@@ -165,184 +141,141 @@ const ProductManagement = () => {
   return (
     <div className="admin-container">
       <div className="product-form-container">
-        <h2>{isEditing ? 'Edit Book' : 'Add New Book'}</h2>
-        <form className="product-form" onSubmit={handleSubmit}>
-          {/* --- Book Info --- */}
-          <h3 className="section-title">📘 Book Info</h3>
+        <h2>{isEditing ? 'Edit Manga' : 'Add New Manga'}</h2>
+        <form onSubmit={handleSubmit} className="product-form">
+
+          {/* Required Fields */}
           <div className="form-group">
-            <label>Book Title *</label>
-            <input type="text" name="name" value={formData.name} onChange={handleInputChange} required />
-          </div>
-          <div className="form-group">
-            <label>Author *</label>
-            <input type="text" name="author" value={formData.author} onChange={handleInputChange} required />
-          </div>
-          <div className="form-group full-width">
-            <label>Description *</label>
-            <textarea name="description" value={formData.description} onChange={handleInputChange} required />
-          </div>
-          <div className="form-group">
-            <label>Publisher</label>
-            <input type="text" name="publisher" value={formData.publisher} onChange={handleInputChange} />
-          </div>
-          <div className="form-group">
-            <label>ISBN</label>
-            <input type="text" name="isbn" value={formData.isbn} onChange={handleInputChange} />
-          </div>
-          <div className="form-group">
-            <label>Published Date</label>
-            <input type="date" name="publishedDate" value={formData.publishedDate?.slice(0, 10)} onChange={handleInputChange} />
-          </div>
-          <div className="form-group">
-            <label>Language</label>
-            <input type="text" name="language" value={formData.language} onChange={handleInputChange} />
+            <label>Main Image *</label>
+            <input type="file" name="image" accept="image/*" onChange={handleInputChange} required={!isEditing} />
+            {imagePreview && <div className="image-preview"><img src={imagePreview} alt="preview" /></div>}
           </div>
 
-          {/* --- Pricing --- */}
-          <h3 className="section-title">💰 Pricing</h3>
           <div className="form-group">
-            <label>Regular Price *</label>
-            <input type="number" name="price" value={formData.price} onChange={handleInputChange} required />
-          </div>
-          <div className="form-group">
-            <label>Discount Price</label>
-            <input type="number" name="discountPrice" value={formData.discountPrice} onChange={handleInputChange} />
+            <label>Product Name *</label>
+            <input type="text" name="name" value={formData.name} onChange={handleInputChange} required placeholder="One Piece Vol. 1" />
           </div>
 
-          {/* --- Inventory --- */}
-          <h3 className="section-title">📦 Inventory</h3>
-          <div className="form-group">
-            <label>Count in Stock *</label>
-            <input type="number" name="countInStock" value={formData.countInStock} onChange={handleInputChange} required />
-          </div>
-          <div className="form-group">
-            <label>SKU</label>
-            <input type="text" name="sku" value={formData.sku} onChange={handleInputChange} />
+          <div className="form-group" style={{ gridColumn: 'span 2' }}>
+            <label>Product Description *</label>
+            <textarea name="description" value={formData.description} onChange={handleInputChange} required placeholder="Short synopsis of manga..." />
           </div>
 
-          {/* --- Categorization --- */}
-          <h3 className="section-title">🏷️ Categorization</h3>
           <div className="form-group">
             <label>Category *</label>
             <select name="category" value={formData.category} onChange={handleInputChange} required>
-              <option value="">Select Category</option>
-              {CATEGORIES.map((c) => (
-                <option key={c.slug} value={c.slug}>
-                  {c.name}
-                </option>
-              ))}
+              <option value="">Select category</option>
+              {CATEGORIES.map(c => <option key={c.slug} value={c.slug}>{c.name}</option>)}
             </select>
           </div>
+
           <div className="form-group">
             <label>Subcategory *</label>
             <select name="subcategory" value={formData.subcategory} onChange={handleInputChange} required>
-              <option value="">Select Subcategory</option>
-              {subcategories.map((s) => (
-                <option key={s.slug} value={s.slug}>
-                  {s.name}
-                </option>
-              ))}
+              <option value="">Select subcategory</option>
+              {subcategories.map(s => <option key={s.slug} value={s.slug}>{s.name}</option>)}
             </select>
           </div>
 
-          {/* --- Media --- */}
-          <h3 className="section-title">🖼️ Media</h3>
           <div className="form-group">
-            <label>Main Product Image *</label>
-            <input type="file" name="image" accept="image/*" onChange={handleInputChange} required={!isEditing} />
-            {imagePreview && <div className="image-preview"><img src={imagePreview} alt="Preview" /></div>}
-          </div>
-          <div className="form-group">
-            <label>Additional Images</label>
-            <input type="file" name="images" accept="image/*" multiple onChange={handleInputChange} />
-            <div className="gallery-preview">
-              {galleryPreview.map((img, i) => (
-                <img key={i} src={img} alt="Preview" className="gallery-thumb" />
-              ))}
-            </div>
+            <label>Price (₱) *</label>
+            <input type="number" name="price" step="0.01" value={formData.price} onChange={handleInputChange} required />
           </div>
 
-          {/* --- Advanced SEO Toggle --- */}
-          <button
-            type="button"
-            className="btn-toggle-advanced"
-            onClick={() => setShowAdvanced(!showAdvanced)}
-          >
-            {showAdvanced ? 'Hide Advanced Fields ▲' : 'Show Advanced Fields ▼'}
-          </button>
+          <div className="form-group">
+            <label>Stock *</label>
+            <input type="number" name="countInStock" value={formData.countInStock} onChange={handleInputChange} required />
+          </div>
 
-          {showAdvanced && (
+          {/* Optional Fields Toggle */}
+          <div className="form-group" style={{ gridColumn: 'span 2', textAlign: 'center', marginTop: '10px' }}>
+            <button
+              type="button"
+              onClick={() => setShowOptional(!showOptional)}
+              style={{
+                backgroundColor: '#3498db',
+                color: 'white',
+                border: 'none',
+                padding: '8px 16px',
+                borderRadius: '4px',
+                cursor: 'pointer',
+              }}
+            >
+              {showOptional ? 'Hide Optional Fields' : 'Add Optional Fields'}
+            </button>
+          </div>
+
+          {/* Optional Fields */}
+          {showOptional && (
             <>
-              <h3 className="section-title">🔍 SEO</h3>
+              <div className="form-group">
+                <label>Series Title</label>
+                <input type="text" name="seriesTitle" value={formData.seriesTitle} onChange={handleInputChange} placeholder="One Piece" />
+              </div>
+
+              <div className="form-group">
+                <label>Volume Number</label>
+                <input type="number" name="volumeNumber" value={formData.volumeNumber} onChange={handleInputChange} placeholder="1" />
+              </div>
+
+              <div className="form-group">
+                <label>Publisher</label>
+                <input type="text" name="publisher" value={formData.publisher} onChange={handleInputChange} placeholder="Shueisha" />
+              </div>
+
+              <div className="form-group">
+                <label>Format</label>
+                <select name="format" value={formData.format} onChange={handleInputChange}>
+                  <option value="">Select format</option>
+                  <option value="Tankōbon">Tankōbon</option>
+                  <option value="Omnibus">Omnibus</option>
+                  <option value="Digital">Digital</option>
+                </select>
+              </div>
+
               <div className="form-group">
                 <label>Slug</label>
-                <input type="text" name="slug" value={formData.slug} onChange={handleInputChange} />
-              </div>
-              <div className="form-group">
-                <label>Meta Title</label>
-                <input type="text" name="metaTitle" value={formData.metaTitle} onChange={handleInputChange} />
-              </div>
-              <div className="form-group full-width">
-                <label>Meta Description</label>
-                <textarea name="metaDescription" value={formData.metaDescription} onChange={handleInputChange} />
+                <input type="text" name="slug" value={formData.slug} onChange={handleInputChange} placeholder="Auto-generated from title" />
               </div>
             </>
           )}
 
           <div className="form-buttons">
-            <button type="submit" className="btn-submit">
-              {isEditing ? 'Update Product' : 'Add Product'}
-            </button>
-            {isEditing && (
-              <button type="button" className="btn-cancel" onClick={resetForm}>
-                Cancel
-              </button>
-            )}
+            <button type="submit" className="btn-submit">{isEditing ? 'Update Manga' : 'Add Manga'}</button>
+            {isEditing && <button type="button" className="btn-cancel" onClick={resetForm}>Cancel</button>}
           </div>
         </form>
       </div>
 
-      {/* --- Product List --- */}
+      {/* Product List */}
       <div className="products-list-container">
-        <h2>📚 Products</h2>
+        <h2>Product List</h2>
         <div className="products-list">
-          <table key={tableKey}>
+          <table>
             <thead>
               <tr>
                 <th>Image</th>
-                <th>Title</th>
-                <th>Author</th>
+                <th>Name</th>
+                <th>Category</th>
                 <th>Price</th>
                 <th>Stock</th>
-                <th>SKU</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {products.length === 0 ? (
-                <tr>
-                  <td colSpan="7" className="no-products">
-                    No products found
-                  </td>
-                </tr>
+                <tr><td colSpan="6" className="no-products">No products available</td></tr>
               ) : (
-                products.map((p) => (
+                products.map(p => (
                   <tr key={p._id}>
-                    <td>
-                      <img src={p.image} alt={p.name} className="product-thumbnail" />
-                    </td>
+                    <td><img src={p.image} alt={p.name} className="product-thumbnail" /></td>
                     <td>{p.name}</td>
-                    <td>{p.author}</td>
+                    <td>{p.category}</td>
                     <td>₱{p.price}</td>
                     <td>{p.countInStock}</td>
-                    <td>{p.sku}</td>
                     <td className="actions">
-                      <button className="btn-edit" onClick={() => handleEdit(p)}>
-                        Edit
-                      </button>
-                      <button className="btn-delete" onClick={() => handleDelete(p._id)}>
-                        Delete
-                      </button>
+                      <button className="btn-edit" onClick={() => handleEdit(p)}>Edit</button>
+                      <button className="btn-delete" onClick={() => handleDelete(p._id)}>Delete</button>
                     </td>
                   </tr>
                 ))
