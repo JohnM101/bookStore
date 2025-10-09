@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useUser } from '../../contexts/UserContext';
 import { CATEGORIES } from '../../data/categories';
-import '../AdminDashboard.css'; // Make sure the path is correct
+import './AdminDashboard.css'; // Make sure the path is correct
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://bookstore-0hqj.onrender.com';
 
