@@ -47,13 +47,19 @@ const ProductManagement = () => {
     }
   };
 
-  const generateSlug = (text) => {
-    return text
+  // Slug generator with optional volume
+  const generateSlug = (name, volume) => {
+    let base = name
       .toLowerCase()
       .trim()
-      .replace(/[^\w\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/--+/g, '-');
+      .replace(/[^\w\s-]/g, '') // remove invalid chars
+      .replace(/\s+/g, '-')     // spaces to dash
+      .replace(/--+/g, '-');    // multiple dashes to one
+
+    if (volume) {
+      base += `-vol-${volume}`;
+    }
+    return base;
   };
 
   const handleInputChange = (e) => {
@@ -64,21 +70,30 @@ const ProductManagement = () => {
       const reader = new FileReader();
       reader.onloadend = () => setImagePreview(reader.result);
       reader.readAsDataURL(files[0]);
-    } else {
-      let updatedData = { ...formData, [name]: value };
-
-      // Auto-generate slug from name if slug not manually edited
-      if (name === 'name' && !isSlugEdited) {
-        updatedData.slug = generateSlug(value);
-      }
-
-      // If user types in slug field, mark it as manually edited
-      if (name === 'slug') {
-        setIsSlugEdited(true);
-      }
-
-      setFormData(updatedData);
+      return;
     }
+
+    let updatedData = { ...formData, [name]: value };
+
+    // If user types in slug manually
+    if (name === 'slug') {
+      setIsSlugEdited(true);
+      // If slug cleared accidentally, regenerate
+      if (!value) {
+        updatedData.slug = generateSlug(formData.name, formData.volumeNumber);
+        setIsSlugEdited(false);
+      }
+    }
+
+    // Auto-generate slug from name or volume if slug not manually edited
+    if ((name === 'name' || name === 'volumeNumber') && !isSlugEdited) {
+      updatedData.slug = generateSlug(
+        name === 'name' ? value : formData.name,
+        name === 'volumeNumber' ? value : formData.volumeNumber
+      );
+    }
+
+    setFormData(updatedData);
   };
 
   const handleSubmit = async (e) => {
