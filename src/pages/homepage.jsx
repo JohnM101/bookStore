@@ -1,4 +1,3 @@
-//homepage.jsx
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
@@ -13,14 +12,10 @@ const CATEGORY_COLORS = {
   // add more categories here
 };
 
-const Homepage = () => {
-  const banners = [
-    '/assets/Banner 2.png',
-    '/assets/Banner 3.png',
-    '/assets/Banner 4.png',
-    '/assets/Banner 5.png'
-  ];
+const normalizeSlug = (str) => str?.toLowerCase().replace(/\s+/g, '-').trim();
 
+const Homepage = () => {
+  const banners = ['/assets/Banner 2.png', '/assets/Banner 3.png', '/assets/Banner 4.png', '/assets/Banner 5.png'];
   const [current, setCurrent] = useState(0);
   const [showDisclaimer, setShowDisclaimer] = useState(true);
   const [productData, setProductData] = useState({});
@@ -29,7 +24,6 @@ const Homepage = () => {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user'));
 
-  // Disclaimer
   useEffect(() => {
     if (!localStorage.getItem('hasSeenDisclaimer')) setShowDisclaimer(true);
   }, []);
@@ -50,7 +44,7 @@ const Homepage = () => {
         const products = await response.json();
 
         const categorizedProducts = products.reduce((acc, product) => {
-          const categorySlug = product.category;
+          const categorySlug = normalizeSlug(product.category);
           if (!acc[categorySlug]) acc[categorySlug] = [];
           acc[categorySlug].push(product);
           return acc;
@@ -80,7 +74,7 @@ const Homepage = () => {
   };
 
   const getCategoryName = slug => {
-    const category = CATEGORIES.find(c => c.slug === slug);
+    const category = CATEGORIES.find(c => normalizeSlug(c.slug) === normalizeSlug(slug));
     return category ? category.name : slug;
   };
 
@@ -109,7 +103,7 @@ const Homepage = () => {
             >
               <img src={product.image} alt={product.name} />
               <p className="product-name">{product.name}</p>
-              <p className="product-subtitle">{product.description.substring(0, 30)}...</p>
+              <p className="product-subtitle">{product.description?.substring(0, 30)}...</p>
               <p className="price">₱{product.price?.toFixed(2) || 'N/A'}</p>
             </div>
           ))}
@@ -118,6 +112,8 @@ const Homepage = () => {
       </div>
     );
   };
+
+  if (loading) return <div className="loading">Loading products...</div>;
 
   return (
     <div className="app">
@@ -145,11 +141,7 @@ const Homepage = () => {
         <img src={banners[current]} alt={`Banner ${current + 1}`} />
       </div>
 
-      {loading ? (
-        <div className="loading">Loading products...</div>
-      ) : (
-        Object.entries(productData).map(([slug, products]) => renderProductSection(slug, products))
-      )}
+      {Object.entries(productData).map(([slug, products]) => renderProductSection(slug, products))}
     </div>
   );
 };

@@ -1,9 +1,8 @@
-// src/pages/MangaCategoryPage.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import './categories.css';
 
-//const RENDER_URL = process.env.REACT_APP_RENDER_URL;
+const normalizeSlug = (str) => str?.toLowerCase().replace(/\s+/g, '-').trim();
 
 const MangaCategoryPage = ({ baseCategory, heading }) => {
   const navigate = useNavigate();
@@ -14,76 +13,61 @@ const MangaCategoryPage = ({ baseCategory, heading }) => {
   const [error, setError] = useState(null);
   const [sortOption, setSortOption] = useState('default');
 
-  const normalize = (str) => str?.toLowerCase().replace(/\s+/g, '-').trim();
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://bookstore-0hqj.onrender.com";
 
-useEffect(() => {
-  const fetchProducts = async () => {
-    try {
-      setLoading(true);
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://bookstore-0hqj.onrender.com";
+        const user = JSON.parse(localStorage.getItem('user'));
+        const token = user?.token || '';
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-      const user = JSON.parse(localStorage.getItem('user'));
-      const token = user?.token || '';
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+        const res = await fetch(`${API_URL}/api/admin/products`, { headers });
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
 
-      console.log('Fetching products from:', `${API_URL}/api/admin/products`);
-      const res = await fetch(`${API_URL}/api/admin/products`, { headers });
-      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        const allProducts = await res.json();
 
-      const allProducts = await res.json();
-      console.log('All products fetched:', allProducts);
+        const baseCatNorm = normalizeSlug(baseCategory);
+        const subCatNorm = normalizeSlug(subcategory);
 
-      const baseCatNorm = normalize(baseCategory);
-      const subCatNorm = normalize(subcategory);
+        const filteredProducts = allProducts.filter((product) => {
+          const productCat = normalizeSlug(product.category);
+          const productSub = normalizeSlug(product.subcategory);
+          return subCatNorm
+            ? productCat === baseCatNorm && productSub === subCatNorm
+            : productCat === baseCatNorm;
+        });
 
-      const filteredProducts = allProducts.filter((product) => {
-        const productCat = normalize(product.category);
-        const productSub = normalize(product.subcategory);
+        setProductsData(filteredProducts);
 
-        const match = subCatNorm
-          ? productCat === baseCatNorm && productSub === subCatNorm
-          : productCat === baseCatNorm;
+        const uniqueSubcats = [
+          ...new Set(
+            allProducts
+              .filter(p => normalizeSlug(p.category) === baseCatNorm)
+              .map(p => p.subcategory)
+              .filter(Boolean)
+          )
+        ];
+        setSubcategories(uniqueSubcats);
 
-        console.log(
-          `Checking product: ${product.name}, category: ${productCat}, subcategory: ${productSub}, match: ${match}`
-        );
+      } catch (err) {
+        console.error('Failed to fetch products:', err);
+        setError('Failed to load products. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-        return match;
-      });
-
-      console.log('Filtered products:', filteredProducts);
-      setProductsData(filteredProducts);
-
-      const uniqueSubcats = [
-        ...new Set(
-          allProducts
-            .filter((p) => normalize(p.category) === baseCatNorm)
-            .map((p) => p.subcategory)
-            .filter(Boolean)
-        ),
-      ];
-      setSubcategories(uniqueSubcats);
-    } catch (err) {
-      console.error('Failed to fetch products:', err);
-      setError('Failed to load products. Please try again later.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  fetchProducts();
-}, [baseCategory, subcategory]);
+    fetchProducts();
+  }, [baseCategory, subcategory]);
 
   const handleSortChange = (e) => setSortOption(e.target.value);
-
   const getSortedProducts = () => {
     switch (sortOption) {
-      case 'price-low-to-high':
-        return [...productsData].sort((a, b) => a.price - b.price);
-      case 'price-high-to-low':
-        return [...productsData].sort((a, b) => b.price - a.price);
-      default:
-        return productsData;
+      case 'price-low-to-high': return [...productsData].sort((a, b) => a.price - b.price);
+      case 'price-high-to-low': return [...productsData].sort((a, b) => b.price - a.price);
+      default: return productsData;
     }
   };
 
@@ -95,27 +79,19 @@ useEffect(() => {
 
   const renderProductSection = (slug, products) => {
     if (!products || products.length === 0) return <p className="no-products">No products found.</p>;
-
     const bgColor = CATEGORY_COLORS[slug]?.bg || '#ccc';
     const textColor = CATEGORY_COLORS[slug]?.text || '#fff';
 
     return (
-      <div
-        className={`product-section ${slug}-section`}
-        style={{ '--section-color': bgColor, '--section-text-color': textColor }}
-      >
+      <div className={`product-section ${slug}-section`} style={{ '--section-color': bgColor, '--section-text-color': textColor }}>
         <div className="product-grid">
-          {products.map((product) => (
+          {products.map(product => (
             <div
               className="product-card"
               key={product._id || product.id}
               onClick={() => navigate(`/product/${product._id || product.id}`)}
             >
-              <img
-                src={product.image}
-                alt={product.name}
-                onError={(e) => { e.target.onerror = null; e.target.src = '/assets/placeholder-image.png'; }}
-              />
+              <img src={product.image} alt={product.name} onError={(e) => { e.target.onerror = null; e.target.src = '/assets/placeholder-image.png'; }} />
               <p className="product-name">{product.name}</p>
               <p className="product-subtitle">{product.description?.substring(0, 30)}...</p>
               <p className="price">₱{product.price?.toFixed(2) || 'N/A'}</p>
@@ -135,21 +111,19 @@ useEffect(() => {
         {heading} {subcategory ? `– ${subcategory.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}` : ''}
       </h2>
 
-      {/* Subcategory nav */}
       <div className="subcategory-nav">
         <Link to={`/${baseCategory}`} className={!subcategory ? 'active-subcat' : ''}>All</Link>
-        {subcategories.map((sc) => (
+        {subcategories.map(sc => (
           <Link
             key={sc}
-            to={`/${baseCategory}/${normalize(sc)}`}
-            className={normalize(subcategory) === normalize(sc) ? 'active-subcat' : ''}
+            to={`/${baseCategory}/${normalizeSlug(sc)}`}
+            className={normalizeSlug(subcategory) === normalizeSlug(sc) ? 'active-subcat' : ''}
           >
             {sc}
           </Link>
         ))}
       </div>
 
-      {/* Sort */}
       <div className="sorting-controls">
         <label htmlFor="sort-select">Sort by:</label>
         <select id="sort-select" value={sortOption} onChange={handleSortChange}>
@@ -159,7 +133,6 @@ useEffect(() => {
         </select>
       </div>
 
-      {/* Product section */}
       {renderProductSection(baseCategory, getSortedProducts())}
 
       <hr className="bottom-line" />
