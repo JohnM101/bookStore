@@ -1,8 +1,7 @@
-// ProductManagement.jsx
 import React, { useState, useEffect } from 'react';
 import { useUser } from '../../contexts/UserContext';
 import { CATEGORIES } from '../../data/categories';
-import './AdminDashboard.css'; // Make sure the path is correct
+import '../AdminDashboard.css';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://bookstore-0hqj.onrender.com';
 
@@ -220,7 +219,14 @@ const ProductManagement = () => {
             <input type="number" name="countInStock" value={formData.countInStock} onChange={handleInputChange} required />
           </div>
           <div className="form-group" style={{ gridColumn: 'span 2', textAlign: 'center', marginTop: '10px' }}>
-            <button type="button" onClick={() => setShowOptional(!showOptional)} className="btn-submit">
+            <button type="button" onClick={() => setShowOptional(!showOptional)} style={{
+              backgroundColor: '#3498db',
+              color: 'white',
+              border: 'none',
+              padding: '8px 16px',
+              borderRadius: '4px',
+              cursor: 'pointer',
+            }}>
               {showOptional ? 'Hide Optional Fields' : 'Add Optional Fields'}
             </button>
           </div>
@@ -262,39 +268,35 @@ const ProductManagement = () => {
 
       <div className="products-list-container">
         <h2>Product List</h2>
-        {products.length === 0 ? (
-          <div className="no-products">No products found.</div>
-        ) : (
-          <div className="products-list">
-            <table>
-              <thead>
-                <tr>
-                  <th>Image</th>
-                  <th>Name</th>
-                  <th>Category</th>
-                  <th>Price</th>
-                  <th>Stock</th>
-                  <th>Actions</th>
+        <div className="products-list">
+          <table>
+            <thead>
+              <tr>
+                <th>Image</th>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Price</th>
+                <th>Stock</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {products.map(p => (
+                <tr key={p._id}>
+                  <td><img src={p.image} alt={p.name} className="thumbnail" /></td>
+                  <td>{p.name}{p.volumeNumber ? ` Vol. ${p.volumeNumber}` : ''}</td>
+                  <td>{p.category}</td>
+                  <td>₱{p.price.toFixed(2)}</td>
+                  <td>{p.countInStock}</td>
+                  <td>
+                    <button onClick={() => handleEdit(p)}>Edit</button>
+                    <button onClick={() => handleDelete(p._id)}>Delete</button>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {products.map(p => (
-                  <tr key={p._id}>
-                    <td><img src={p.image} alt={p.name} className="product-thumbnail" /></td>
-                    <td>{p.name}{p.volumeNumber ? ` Vol. ${p.volumeNumber}` : ''}</td>
-                    <td>{p.category}</td>
-                    <td>₱{p.price.toFixed(2)}</td>
-                    <td>{p.countInStock}</td>
-                    <td className="actions">
-                      <button className="btn-edit" onClick={() => handleEdit(p)}>Edit</button>
-                      <button className="btn-delete" onClick={() => handleDelete(p._id)}>Delete</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
