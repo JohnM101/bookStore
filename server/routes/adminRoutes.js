@@ -1,3 +1,4 @@
+// Admin Routes (adminRoutes.js)
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
@@ -27,7 +28,7 @@ const storage = new CloudinaryStorage({
 });
 const upload = multer({ storage });
 
-// ---------------- Helper Function ----------------
+// ---------------- Helper Functions ----------------
 const generateSlug = (name, volumeNumber) => {
   if (!name) return '';
   let base = name.toLowerCase().trim()
@@ -62,67 +63,80 @@ router.get('/products/:id', protect, admin, async (req, res) => {
 });
 
 // CREATE product
-router.post('/products', protect, admin, upload.single('image'), async (req, res) => {
-  try {
-    if (!req.file) return res.status(400).json({ message: 'Main image is required' });
+router.post(
+  '/products',
+  protect,
+  admin,
+  upload.single('image'),
+  async (req, res) => {
+    try {
+      if (!req.file) return res.status(400).json({ message: 'Main image is required' });
 
-    const {
-      name,
-      description,
-      category,
-      subcategory,
-      price,
-      countInStock,
-      seriesTitle,
-      volumeNumber,
-      publisher,
-      format,
-      slug
-    } = req.body;
+      const {
+        name,
+        description,
+        category,
+        subcategory,
+        price,
+        countInStock,
+        seriesTitle,
+        volumeNumber,
+        publisher,
+        format,
+        slug
+      } = req.body;
 
-    const product = new Product({
-      name,
-      description,
-      category,
-      subcategory,
-      price: parseFloat(price),
-      countInStock: parseInt(countInStock),
-      image: req.file.path,
-      seriesTitle,
-      volumeNumber: volumeNumber ? parseInt(volumeNumber) : undefined,
-      publisher,
-      format,
-      slug: slug?.trim() || generateSlug(name, volumeNumber)
-    });
+      const slugValue = slug?.trim() || generateSlug(name, volumeNumber);
 
-    const savedProduct = await product.save();
-    res.status(201).json(savedProduct);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
+      const product = new Product({
+        name,
+        description,
+        category,
+        subcategory,
+        price: parseFloat(price),
+        countInStock: parseInt(countInStock),
+        image: req.file.path,
+        seriesTitle,
+        volumeNumber: volumeNumber ? parseInt(volumeNumber) : undefined,
+        publisher,
+        format,
+        slug: slugValue
+      });
+
+      const savedProduct = await product.save();
+      res.status(201).json(savedProduct);
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
   }
-});
+);
 
 // UPDATE product
-router.put('/products/:id', protect, admin, upload.single('image'), async (req, res) => {
-  try {
-    const body = req.body;
+router.put(
+  '/products/:id',
+  protect,
+  admin,
+  upload.single('image'),
+  async (req, res) => {
+    try {
+      const body = req.body;
 
-    // Auto-generate slug if not provided
-    const slugValue = body.slug?.trim() || generateSlug(body.name, body.volumeNumber);
-    const updateData = { ...body, slug: slugValue };
+      const slugValue = body.slug?.trim() || generateSlug(body.name, body.volumeNumber);
+      const updateData = { ...body, slug: slugValue };
 
-    if (req.file) updateData.image = req.file.path;
-    if (updateData.price) updateData.price = parseFloat(updateData.price);
-    if (updateData.countInStock) updateData.countInStock = parseInt(updateData.countInStock);
-    if (updateData.volumeNumber) updateData.volumeNumber = parseInt(updateData.volumeNumber);
+      if (updateData.price) updateData.price = parseFloat(updateData.price);
+      if (updateData.countInStock) updateData.countInStock = parseInt(updateData.countInStock);
+      if (updateData.volumeNumber) updateData.volumeNumber = parseInt(updateData.volumeNumber);
+      if (req.file) updateData.image = req.file.path;
 
-    const updatedProduct = await Product.findByIdAndUpdate(req.params.id, updateData, { new: true });
-    if (!updatedProduct) return res.status(404).json({ message: 'Product not found' });
-    res.json(updatedProduct);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+      const updatedProduct = await Product.findByIdAndUpdate(req.params.id, updateData, { new: true });
+      if (!updatedProduct) return res.status(404).json({ message: 'Product not found' });
+      res.json(updatedProduct);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
   }
-});
+);
 
 // DELETE product
 router.delete('/products/:id', protect, admin, async (req, res) => {

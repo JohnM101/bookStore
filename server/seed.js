@@ -1,9 +1,8 @@
 const mongoose = require('mongoose');
-const dotenv = require('dotenv');
 const Product = require('./models/Product');
-dotenv.config();
+const productData = require('./data/products');
 
-const productData = require('./productData'); // Import your productData if separate
+const DB_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/bookstore';
 
 const generateSlug = (name, volumeNumber) => {
   if (!name) return '';
@@ -15,16 +14,10 @@ const generateSlug = (name, volumeNumber) => {
   return base;
 };
 
-const seedDatabase = async () => {
-  try {
-    await mongoose.connect(process.env.MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true
-    });
-
+mongoose.connect(DB_URI)
+  .then(async () => {
+    console.log('Connected to MongoDB');
     await Product.deleteMany({});
-    console.log('Cleared existing products');
-
     const allProducts = [];
 
     for (const category in productData) {
@@ -38,13 +31,7 @@ const seedDatabase = async () => {
     }
 
     await Product.insertMany(allProducts);
-    console.log(`Successfully seeded ${allProducts.length} products`);
-    await mongoose.disconnect();
-    console.log('Disconnected from MongoDB');
-  } catch (error) {
-    console.error('Error seeding database:', error);
-    process.exit(1);
-  }
-};
-
-seedDatabase();
+    console.log('Database seeded!');
+    process.exit();
+  })
+  .catch(err => console.error(err));
