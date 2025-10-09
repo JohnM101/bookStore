@@ -5,8 +5,6 @@ const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const cloudinary = require('cloudinary').v2;
 
 const Product = require('../models/Product');
-const User = require('../models/User');
-const Order = require('../models/Order');
 const { protect, admin } = require('../middleware/authMiddleware');
 
 // ---------------- Cloudinary Config ----------------
@@ -16,15 +14,15 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-// Storage for product images
 const storage = new CloudinaryStorage({
   cloudinary,
   params: {
     folder: 'bookstore-products',
-    allowed_formats: ['jpg', 'jpeg', 'png', 'gif'],
-    transformation: [{ width: 500, height: 500, crop: 'limit' }]
+    allowed_formats: ['jpg', 'jpeg', 'png'],
+    transformation: [{ width: 600, height: 900, crop: 'limit' }]
   }
 });
+
 const upload = multer({ storage });
 
 // ---------------- Product Routes ----------------
@@ -55,43 +53,26 @@ router.post(
   '/products',
   protect,
   admin,
-  upload.fields([
-    { name: 'image', maxCount: 1 },
-    { name: 'images', maxCount: 5 }
-  ]),
+  upload.single('image'),
   async (req, res) => {
     try {
-      const body = req.body;
-      if (!req.files || !req.files['image'])
-        return res.status(400).json({ message: 'Main image is required' });
+      if (!req.file) return res.status(400).json({ message: 'Main image is required' });
+
+      const { name, description, category, subcategory, price, countInStock, seriesTitle, volumeNumber, publisher, format, slug } = req.body;
 
       const product = new Product({
-        name: body.name,
-        subtitle: body.subtitle,
-        description: body.description,
-        price: parseFloat(body.price),
-        discountPrice: body.discountPrice ? parseFloat(body.discountPrice) : undefined,
-        discountStart: body.discountStart || undefined,
-        discountEnd: body.discountEnd || undefined,
-        category: body.category,
-        subcategory: body.subcategory,
-        image: req.files['image'][0].path,
-        images: req.files['images'] ? req.files['images'].map(f => f.path) : [],
-        author: body.author,
-        publisher: body.publisher,
-        isbn: body.isbn,
-        publishedDate: body.publishedDate,
-        language: body.language,
-        pages: body.pages ? parseInt(body.pages) : undefined,
-        format: body.format,
-        edition: body.edition,
-        sku: body.sku,
-        supplier: body.supplier,
-        reorderLevel: body.reorderLevel ? parseInt(body.reorderLevel) : undefined,
-        countInStock: body.countInStock ? parseInt(body.countInStock) : 0,
-        slug: body.slug,
-        metaTitle: body.metaTitle,
-        metaDescription: body.metaDescription
+        name,
+        description,
+        category,
+        subcategory,
+        price: parseFloat(price),
+        countInStock: parseInt(countInStock),
+        image: req.file.path,
+        seriesTitle,
+        volumeNumber: volumeNumber ? parseInt(volumeNumber) : undefined,
+        publisher,
+        format,
+        slug
       });
 
       const savedProduct = await product.save();
@@ -107,21 +88,16 @@ router.put(
   '/products/:id',
   protect,
   admin,
-  upload.fields([
-    { name: 'image', maxCount: 1 },
-    { name: 'images', maxCount: 5 }
-  ]),
+  upload.single('image'),
   async (req, res) => {
     try {
       const body = req.body;
       const updateData = { ...body };
 
-      if (req.files['image']) updateData.image = req.files['image'][0].path;
-      if (req.files['images']) updateData.images = req.files['images'].map(f => f.path);
-
-      ['price', 'discountPrice', 'pages', 'reorderLevel', 'countInStock'].forEach(f => {
-        if (updateData[f] !== undefined) updateData[f] = parseFloat(updateData[f]);
-      });
+      if (req.file) updateData.image = req.file.path;
+      if (updateData.price) updateData.price = parseFloat(updateData.price);
+      if (updateData.countInStock) updateData.countInStock = parseInt(updateData.countInStock);
+      if (updateData.volumeNumber) updateData.volumeNumber = parseInt(updateData.volumeNumber);
 
       const updatedProduct = await Product.findByIdAndUpdate(req.params.id, updateData, { new: true });
       if (!updatedProduct) return res.status(404).json({ message: 'Product not found' });
@@ -142,6 +118,7 @@ router.delete('/products/:id', protect, admin, async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
+
 
 // ---------------- User Routes ----------------
 
