@@ -105,7 +105,7 @@ const ProductManagement = () => {
     setIsEditing(false);
   };
 
-  if(loading) return <div>Loading...</div>;
+  if(loading) return <div className="loading">Loading...</div>;
 
   const selectedCategory = CATEGORIES.find(c=>c.slug===formData.category);
   const subcategories = selectedCategory?.subcategories || [];
@@ -123,7 +123,6 @@ const ProductManagement = () => {
           <input type="number" step="0.01" name="discountPrice" value={formData.discountPrice} onChange={handleInputChange} placeholder="Discount Price"/>
           <input type="date" name="discountStart" value={formData.discountStart} onChange={handleInputChange}/>
           <input type="date" name="discountEnd" value={formData.discountEnd} onChange={handleInputChange}/>
-
           <input type="text" name="author" value={formData.author} onChange={handleInputChange} placeholder="Author"/>
           <input type="text" name="publisher" value={formData.publisher} onChange={handleInputChange} placeholder="Publisher"/>
           <input type="text" name="isbn" value={formData.isbn} onChange={handleInputChange} placeholder="ISBN"/>
@@ -141,7 +140,6 @@ const ProductManagement = () => {
           <input type="text" name="supplier" value={formData.supplier} onChange={handleInputChange} placeholder="Supplier"/>
           <input type="number" name="reorderLevel" value={formData.reorderLevel} onChange={handleInputChange} placeholder="Reorder Level"/>
           <input type="number" name="countInStock" value={formData.countInStock} onChange={handleInputChange} placeholder="Stock"/>
-
           <select name="category" value={formData.category} onChange={handleInputChange}>
             <option value="">Select Category</option>
             {CATEGORIES.map(c=><option key={c.slug} value={c.slug}>{c.name}</option>)}
@@ -150,52 +148,54 @@ const ProductManagement = () => {
             <option value="">Select Subcategory</option>
             {subcategories.map(s=><option key={s.slug} value={s.slug}>{s.name}</option>)}
           </select>
-
           <input type="text" name="slug" value={formData.slug} onChange={handleInputChange} placeholder="Slug"/>
           <input type="text" name="metaTitle" value={formData.metaTitle} onChange={handleInputChange} placeholder="Meta Title"/>
           <input type="text" name="metaDescription" value={formData.metaDescription} onChange={handleInputChange} placeholder="Meta Description"/>
-
           <input type="file" name="image" onChange={handleInputChange} accept="image/*"/>
           {imagePreview && <img src={imagePreview} alt="Main Preview" style={{height:80, marginRight:10}}/>}
           <input type="file" name="images" onChange={handleInputChange} accept="image/*" multiple/>
           {galleryPreview.map((img,i)=><img key={i} src={img} alt="Gallery Preview" style={{height:50, marginRight:5}}/>)}
 
-          <button type="submit">{isEditing?'Update Product':'Add Product'}</button>
-          {isEditing && <button type="button" onClick={resetForm}>Cancel</button>}
+          <div className="form-buttons">
+            <button type="submit" className="btn-submit">{isEditing?'Update Product':'Add Product'}</button>
+            {isEditing && <button type="button" className="btn-cancel" onClick={resetForm}>Cancel</button>}
+          </div>
         </form>
       </div>
 
-      <div className="product-list-container">
+      <div className="products-list-container">
         <h2>Products</h2>
-        <table key={tableKey}>
-          <thead>
-            <tr>
-              <th>Image</th>
-              <th>Name</th>
-              <th>Author</th>
-              <th>Price</th>
-              <th>Stock</th>
-              <th>SKU</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {products.map(p=>(
-              <tr key={p._id}>
-                <td><img src={p.image} alt={p.name} style={{height:50}}/></td>
-                <td>{p.name}</td>
-                <td>{p.author}</td>
-                <td>${p.price}</td>
-                <td>{p.countInStock}</td>
-                <td>{p.sku}</td>
-                <td>
-                  <button onClick={()=>handleEdit(p)}>Edit</button>
-                  <button onClick={()=>handleDelete(p._id)}>Delete</button>
-                </td>
+        <div className="products-list">
+          <table key={tableKey}>
+            <thead>
+              <tr>
+                <th>Image</th>
+                <th>Name</th>
+                <th>Author</th>
+                <th>Price</th>
+                <th>Stock</th>
+                <th>SKU</th>
+                <th>Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {products.map(p=>(
+                <tr key={p._id}>
+                  <td><img src={p.image} alt={p.name} className="product-thumbnail"/></td>
+                  <td>{p.name}</td>
+                  <td>{p.author}</td>
+                  <td>${p.price}</td>
+                  <td>{p.countInStock}</td>
+                  <td>{p.sku}</td>
+                  <td className="actions">
+                    <button className="btn-edit" onClick={()=>handleEdit(p)}>Edit</button>
+                    <button className="btn-delete" onClick={()=>handleDelete(p._id)}>Delete</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
