@@ -199,7 +199,7 @@ const ProductManagement = () => {
 
           <div className="form-group">
             <label>Product Name *</label>
-            <input type="text" name="name" value={formData.name} onChange={handleInputChange} required placeholder="One Piece Vol. 1" />
+            <input type="text" name="name" value={formData.name} onChange={handleInputChange} required placeholder="One Piece" />
           </div>
 
           <div className="form-group" style={{ gridColumn: 'span 2' }}>
