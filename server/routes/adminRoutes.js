@@ -5,6 +5,8 @@ const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const cloudinary = require('cloudinary').v2;
 
 const Product = require('../models/Product');
+const User = require('../models/User');
+const Order = require('../models/Order');
 const { protect, admin } = require('../middleware/authMiddleware');
 
 // ---------------- Cloudinary Config ----------------
@@ -14,6 +16,7 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
+// Storage for product images
 const storage = new CloudinaryStorage({
   cloudinary,
   params: {
@@ -22,7 +25,6 @@ const storage = new CloudinaryStorage({
     transformation: [{ width: 600, height: 900, crop: 'limit' }]
   }
 });
-
 const upload = multer({ storage });
 
 // ---------------- Product Routes ----------------
@@ -58,7 +60,19 @@ router.post(
     try {
       if (!req.file) return res.status(400).json({ message: 'Main image is required' });
 
-      const { name, description, category, subcategory, price, countInStock, seriesTitle, volumeNumber, publisher, format, slug } = req.body;
+      const {
+        name,
+        description,
+        category,
+        subcategory,
+        price,
+        countInStock,
+        seriesTitle,
+        volumeNumber,
+        publisher,
+        format,
+        slug
+      } = req.body;
 
       const product = new Product({
         name,
@@ -118,7 +132,6 @@ router.delete('/products/:id', protect, admin, async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
-
 
 // ---------------- User Routes ----------------
 
@@ -191,7 +204,6 @@ router.get('/orders', protect, admin, async (req, res) => {
 
 // ---------------- Optional Stats Route ----------------
 router.get('/stats', protect, admin, async (req, res) => {
-  // Implement admin stats logic here
   res.json({ message: 'Stats endpoint' });
 });
 
