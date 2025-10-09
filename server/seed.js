@@ -1,3 +1,5 @@
+//sees.js
+
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const Product = require('./models/Product'); // Adjust path to your Product model
