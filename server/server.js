@@ -8,13 +8,13 @@ const path = require('path');
 const bcrypt = require('bcryptjs');
 const User = require('./models/User');
 
-// ====== Load Environment Variables ======
+// Load env variables
 dotenv.config();
 
-// ====== Connect to MongoDB ======
+// Connect MongoDB
 connectDB();
 
-// ====== Configure Cloudinary ======
+// Configure Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -22,12 +22,10 @@ cloudinary.config({
 });
 
 const app = express();
-
-// ====== Middleware ======
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Enable CORS for your frontend
+// Enable CORS
 app.use(
   cors({
     origin: ['https://book-store-azure-chi.vercel.app', 'http://localhost:3000'],
@@ -35,27 +33,23 @@ app.use(
   })
 );
 
-// ====== Static Uploads (if needed) ======
+// Static uploads
 app.use('/uploads', express.static('uploads'));
 
-// ====== Routes ======
+// Import middleware
+const { protect, admin } = require('./middleware/authMiddleware');
+
+// Routes
 app.use('/api/orders', require('./routes/orderRoutes'));
 app.use('/api/cart', require('./routes/addToCartRoutes'));
 app.use('/api/products', require('./routes/productRoutes'));
 app.use('/api/categories', require('./routes/categoryRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/cms/banners', require('./routes/cmsBannerRoutes'));
-
-// === Import middlewares AFTER connecting DB ===
-const { protect, admin } = require('./middleware/authMiddleware');
-
-// === Admin route (protected) ===
 app.use('/api/admin', protect, admin, require('./routes/adminRoutes'));
+app.use('/api/auth', require('./routes/authRoutes')); // ✅ Handles register/login/google-login
 
-// === Auth route (the ONLY source for auth logic) ===
-app.use('/api/auth', require('./routes/authRoutes'));
-
-// ====== Create Admin User if Missing ======
+// Auto-create admin user
 const createAdminUser = async () => {
   try {
     const adminEmail = 'admin@example.com';
@@ -74,6 +68,7 @@ const createAdminUser = async () => {
       email: adminEmail,
       password: hashedPassword,
       role: 'admin',
+      loginMethod: 'email',
     });
 
     console.log('🎉 Admin user created successfully:', adminEmail);
@@ -83,7 +78,7 @@ const createAdminUser = async () => {
 };
 createAdminUser();
 
-// ====== Serve React Frontend in Production ======
+// Serve frontend in production
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, '../build')));
   app.get('*', (req, res) => {
@@ -91,6 +86,6 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
-// ====== Start Server ======
+// Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

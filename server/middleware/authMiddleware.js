@@ -9,13 +9,18 @@ const protect = asyncHandler(async (req, res, next) => {
     try {
       token = req.headers.authorization.split(' ')[1];
 
+      // Allow guest access
       if (token === 'guest-token' || token === 'null' || token === 'undefined') {
         req.user = { _id: 'guest-id', isGuest: true, isAdmin: false };
         return next();
       }
 
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      req.user = { _id: decoded.id, isAdmin: decoded.isAdmin || false, isGuest: false };
+      req.user = {
+        _id: decoded.id,
+        isAdmin: decoded.isAdmin || false,
+        isGuest: false,
+      };
       return next();
     } catch (error) {
       console.error('Authentication error:', error);
