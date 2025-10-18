@@ -1,6 +1,6 @@
 // src/components/admin/BannerManagement.jsx
-// src/components/admin/BannerManagement.jsx
 import React, { useEffect, useState } from 'react';
+import { useUser } from '../../contexts/UserContext';
 import '../AdminDashboard.css';
 
 const API_URL =
@@ -9,15 +9,21 @@ const API_URL =
   'https://bookstore-0hqj.onrender.com';
 
 const BannerManagement = () => {
+  const { user } = useUser();
   const [banners, setBanners] = useState([]);
   const [form, setForm] = useState({ title: '', imageUrl: '', order: 0 });
   const [editId, setEditId] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // 🔹 Fetch all banners
+  // 🔹 Fetch all banners (with token)
   const fetchBanners = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/cms/banners`);
+      const res = await fetch(`${API_URL}/api/cms/banners`, {
+        headers: {
+          Authorization: `Bearer ${user?.token}`, // ✅ include admin token
+        },
+      });
+      if (!res.ok) throw new Error('Failed to fetch banners');
       const data = await res.json();
       setBanners(data);
     } catch (err) {
@@ -26,8 +32,8 @@ const BannerManagement = () => {
   };
 
   useEffect(() => {
-    fetchBanners();
-  }, []);
+    if (user?.token) fetchBanners();
+  }, [user]);
 
   // 🔹 Handle input change
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
@@ -45,7 +51,10 @@ const BannerManagement = () => {
     try {
       const res = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user?.token}`, // ✅ include token here
+        },
         body: JSON.stringify(form),
       });
 
@@ -76,7 +85,12 @@ const BannerManagement = () => {
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this banner?')) return;
     try {
-      await fetch(`${API_URL}/api/cms/banners/${id}`, { method: 'DELETE' });
+      await fetch(`${API_URL}/api/cms/banners/${id}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${user?.token}`, // ✅ include token
+        },
+      });
       fetchBanners();
     } catch (err) {
       console.error('Error deleting banner:', err);
@@ -88,7 +102,10 @@ const BannerManagement = () => {
     try {
       await fetch(`${API_URL}/api/cms/banners/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user?.token}`, // ✅ include token
+        },
         body: JSON.stringify({ isActive: !isActive }),
       });
       fetchBanners();

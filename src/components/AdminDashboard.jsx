@@ -16,8 +16,12 @@ const AdminDashboard = () => {
 
   // Redirect non-admin users to home
   useEffect(() => {
-    if (!isAdmin()) navigate('/');
+    if (!isAdmin()) {
+      navigate('/');
+      alert('Access denied — admin only');
+    }
   }, [isAdmin, navigate]);
+
 
   const handleLogout = () => {
     logout();
