@@ -57,30 +57,31 @@ app.use('/api/cms/banners', cmsBannerRoutes);
 const { protect, admin } = require('./middleware/authMiddleware');
 app.use('/api/admin', protect, admin, adminRoutes);
 
-// Create admin user if it doesn't exist
 const createAdminUser = async () => {
   try {
-    // Match the exact admin email
-    const adminExists = await User.findOne({ email: 'admin' });
-    
-    if (!adminExists) {
-      await User.create({
-        firstName: 'Admin',
-        lastName: 'User',
-        email: 'admin',
-        password: 'admin',
-        role: 'admin'
-      });
-      console.log('Admin user created');
-    } else {
-      console.log('Admin user already exists');
+    const adminEmail = 'admin@example.com'; // better to use full email
+    const existing = await User.findOne({ email: adminEmail });
+    if (existing) {
+      console.log('✅ Admin user already exists');
+      return;
     }
 
-  } catch (error) {
-    console.error('Error creating admin user:', error);
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash('admin', salt);
+
+    await User.create({
+      firstName: 'Admin',
+      lastName: 'User',
+      email: adminEmail,
+      password: hashedPassword,
+      role: 'admin'
+    });
+
+    console.log('🎉 Admin user created successfully:', adminEmail);
+  } catch (err) {
+    console.error('❌ Error creating admin user:', err);
   }
 };
-
 
 createAdminUser();
 

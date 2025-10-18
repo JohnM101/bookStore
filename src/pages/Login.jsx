@@ -37,24 +37,7 @@ const Login = () => {
     const password = event.target.password.value;
 
     try {
-      // Admin shortcut
-      if (email === 'admin' && password === 'admin') {
-        const adminData = {
-          _id: 'admin-id',
-          firstName: 'Admin',
-          lastName: 'User',
-          email: 'admin',
-          phone: 'N/A',
-          role: 'admin',
-          isLoggedIn: true,
-          isGuest: false,
-          token: 'admin-token',
-          createdAt: new Date().toISOString(),
-        };
-        await login(adminData);
-        navigate('/admin');
-        return;
-      }
+      
 
       // Email/password login
       const res = await fetch(`${API_URL}/api/auth/login`, {

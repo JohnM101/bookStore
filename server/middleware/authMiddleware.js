@@ -15,16 +15,16 @@ const protect = asyncHandler(async (req, res, next) => {
       token = req.headers.authorization.split(' ')[1];
       
       // Special case for development - accept admin-token
-      if (token === 'admin-token') {
-        // Create a mock admin user
-        req.user = {
-          _id: 'admin-id',
-          name: 'Admin User',
-          email: 'admin@example.com',
-          isAdmin: true
-        };
-        return next();
-      }
+      // if (token === 'admin-token') {
+      //   // Create a mock admin user
+      //   req.user = {
+      //     _id: 'admin-id',
+      //     name: 'Admin User',
+      //     email: 'admin@example.com',
+      //     isAdmin: true
+      //   };
+      //   return next();
+      // }
       
       // Special case for guest users
       if (token === 'guest-token' || token === 'null' || token === 'undefined') {
