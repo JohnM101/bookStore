@@ -8,7 +8,7 @@ const User = require('../models/User');
 const router = express.Router();
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-// Helper to create JWT
+// ====== Helper to create JWT ======
 const generateToken = (user) =>
   jwt.sign(
     { id: user._id, isAdmin: user.role === 'admin' },
@@ -30,13 +30,12 @@ router.post('/register', async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // ✅ Default role: 'user'
     const user = await User.create({
       firstName,
       lastName,
       email,
       password: hashedPassword,
-      role: 'user',
+      role: 'user', // default
     });
 
     const token = generateToken(user);
@@ -56,23 +55,28 @@ router.post('/register', async (req, res) => {
 });
 
 // ==========================
-// LOGIN USER (EMAIL/PASSWORD)
+// LOGIN USER
 // ==========================
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
+    console.log('🟢 Login attempt:', email);
 
-    // ✅ Find user by email
     const user = await User.findOne({ email });
-    if (!user)
+    if (!user) {
+      console.log('❌ No user found');
       return res.status(401).json({ message: 'Invalid email or password' });
+    }
 
-    // ✅ Compare hashed passwords
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch)
+    if (!isMatch) {
+      console.log('❌ Password mismatch for', email);
       return res.status(401).json({ message: 'Invalid email or password' });
+    }
 
     const token = generateToken(user);
+
+    console.log('✅ Login success:', email);
 
     res.json({
       _id: user._id,
@@ -101,8 +105,12 @@ router.post('/google-login', async (req, res) => {
     });
 
     const payload = ticket.getPayload();
-    const { email, given_name: firstName, family_name: lastName, sub: googleId } =
-      payload;
+    const {
+      email,
+      given_name: firstName,
+      family_name: lastName,
+      sub: googleId,
+    } = payload;
 
     let user = await User.findOne({ email });
 
@@ -134,13 +142,14 @@ router.post('/google-login', async (req, res) => {
 });
 
 // ==========================
-// GET PROFILE
+// GET USER PROFILE
 // ==========================
 router.get('/profile', async (req, res) => {
   try {
     const authHeader = req.headers.authorization || '';
     const token = authHeader.split(' ')[1];
-    if (!token) return res.status(401).json({ message: 'No token provided' });
+    if (!token)
+      return res.status(401).json({ message: 'No token provided' });
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.id).select('-password');

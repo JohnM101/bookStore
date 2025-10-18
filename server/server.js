@@ -1,66 +1,64 @@
-//server.js
+// server/server.js
 const express = require('express');
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
 const cors = require('cors');
 const cloudinary = require('cloudinary').v2;
-const path = require('path'); 
-const bcrypt = require('bcryptjs'); 
-const adminRoutes = require('./routes/adminRoutes');
-const authRoutes = require('./routes/authRoutes');
+const path = require('path');
+const bcrypt = require('bcryptjs');
 const User = require('./models/User');
-const categoryRoutes = require('./routes/categoryRoutes');
-const cmsBannerRoutes = require('./routes/cmsBannerRoutes');
 
-// Load env vars
+// ====== Load Environment Variables ======
 dotenv.config();
 
-// Connect to database
+// ====== Connect to MongoDB ======
 connectDB();
 
-// Configure Cloudinary
+// ====== Configure Cloudinary ======
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
 const app = express();
 
-// Body parser
-app.use(express.json());
-
-;// Enable CORS
-app.use(cors({
-  origin: ['https://book-store-azure-chi.vercel.app', 'http://localhost:3000']
-}))
-
-// Middleware
+// ====== Middleware ======
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Since we're using Cloudinary, we don't need local uploads
-// but we can keep it for backward compatibility if needed
+// Enable CORS for your frontend
+app.use(
+  cors({
+    origin: ['https://book-store-azure-chi.vercel.app', 'http://localhost:3000'],
+    credentials: true,
+  })
+);
+
+// ====== Static Uploads (if needed) ======
 app.use('/uploads', express.static('uploads'));
 
-// Routes
+// ====== Routes ======
 app.use('/api/orders', require('./routes/orderRoutes'));
 app.use('/api/cart', require('./routes/addToCartRoutes'));
 app.use('/api/products', require('./routes/productRoutes'));
-app.use('/api/categories', categoryRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/auth', authRoutes);
+app.use('/api/categories', require('./routes/categoryRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
-app.use('/api/cms/banners', cmsBannerRoutes);
+app.use('/api/cms/banners', require('./routes/cmsBannerRoutes'));
 
-
-// Update your admin routes to use authentication middleware
+// === Import middlewares AFTER connecting DB ===
 const { protect, admin } = require('./middleware/authMiddleware');
-app.use('/api/admin', protect, admin, adminRoutes);
 
+// === Admin route (protected) ===
+app.use('/api/admin', protect, admin, require('./routes/adminRoutes'));
+
+// === Auth route (the ONLY source for auth logic) ===
+app.use('/api/auth', require('./routes/authRoutes'));
+
+// ====== Create Admin User if Missing ======
 const createAdminUser = async () => {
   try {
-    const adminEmail = 'admin@example.com'; // better to use full email
+    const adminEmail = 'admin@example.com';
     const existing = await User.findOne({ email: adminEmail });
     if (existing) {
       console.log('✅ Admin user already exists');
@@ -75,7 +73,7 @@ const createAdminUser = async () => {
       lastName: 'User',
       email: adminEmail,
       password: hashedPassword,
-      role: 'admin'
+      role: 'admin',
     });
 
     console.log('🎉 Admin user created successfully:', adminEmail);
@@ -83,19 +81,16 @@ const createAdminUser = async () => {
     console.error('❌ Error creating admin user:', err);
   }
 };
-
 createAdminUser();
 
-
-// ---------- SERVE REACT BUILD IN PRODUCTION ----------
+// ====== Serve React Frontend in Production ======
 if (process.env.NODE_ENV === 'production') {
-  // Serve static files from the React app
   app.use(express.static(path.join(__dirname, '../build')));
   app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../build', 'index.html'));
-});
+    res.sendFile(path.join(__dirname, '../build', 'index.html'));
+  });
 }
 
-// Start server
+// ====== Start Server ======
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
