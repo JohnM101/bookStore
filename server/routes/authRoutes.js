@@ -1,14 +1,21 @@
 // server/routes/authRoutes.js
+// ============================
+// AUTH ROUTES (FINAL VERSION)
+// ============================
+
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
+const asyncHandler = require('express-async-handler');
 const User = require('../models/User');
 
 const router = express.Router();
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-// ====== Helper to create JWT ======
+// ============================
+// Helper: Generate JWT Token
+// ============================
 const generateToken = (user) =>
   jwt.sign(
     { id: user._id, isAdmin: user.role === 'admin' },
@@ -16,66 +23,78 @@ const generateToken = (user) =>
     { expiresIn: '30d' }
   );
 
-// ==========================
-// REGISTER USER
-// ==========================
-router.post('/register', async (req, res) => {
-  try {
-    const { firstName, lastName, email, password } = req.body;
+// ============================
+// Register User
+// ============================
+router.post(
+  '/register',
+  asyncHandler(async (req, res) => {
+    const { firstName, lastName, email, password, phone } = req.body;
 
-    const userExists = await User.findOne({ email });
-    if (userExists)
-      return res.status(400).json({ message: 'User already exists' });
+    // Check if user exists
+    const existing = await User.findOne({ email });
+    if (existing) {
+      res.status(400);
+      throw new Error('User already exists');
+    }
 
+    // Hash password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
+    // Create user
     const user = await User.create({
       firstName,
       lastName,
       email,
+      phone,
       password: hashedPassword,
-      role: 'user', // default
+      role: 'user',
     });
 
-    const token = generateToken(user);
+    if (user) {
+      const token = generateToken(user);
+      res.status(201).json({
+        _id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        token,
+        createdAt: user.createdAt,
+      });
+    } else {
+      res.status(400);
+      throw new Error('Invalid user data');
+    }
+  })
+);
 
-    res.status(201).json({
-      _id: user._id,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
-      role: user.role,
-      token,
-    });
-  } catch (err) {
-    console.error('Register error:', err);
-    res.status(500).json({ message: err.message });
-  }
-});
-
-// ==========================
-// LOGIN USER
-// ==========================
-router.post('/login', async (req, res) => {
-  try {
+// ============================
+// Login User
+// ============================
+router.post(
+  '/login',
+  asyncHandler(async (req, res) => {
     const { email, password } = req.body;
     console.log('🟢 Login attempt:', email);
 
     const user = await User.findOne({ email });
     if (!user) {
       console.log('❌ No user found');
-      return res.status(401).json({ message: 'Invalid email or password' });
+      res.status(401);
+      throw new Error('Invalid email or password');
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       console.log('❌ Password mismatch for', email);
-      return res.status(401).json({ message: 'Invalid email or password' });
+      res.status(401);
+      throw new Error('Invalid email or password');
     }
 
     const token = generateToken(user);
-
     console.log('✅ Login success:', email);
 
     res.json({
@@ -83,22 +102,22 @@ router.post('/login', async (req, res) => {
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
+      phone: user.phone,
       role: user.role,
       token,
+      createdAt: user.createdAt,
     });
-  } catch (err) {
-    console.error('Login error:', err);
-    res.status(500).json({ message: err.message });
-  }
-});
+  })
+);
 
-// ==========================
-// GOOGLE LOGIN
-// ==========================
-router.post('/google-login', async (req, res) => {
-  const { token } = req.body;
+// ============================
+// Google Login
+// ============================
+router.post(
+  '/google-login',
+  asyncHandler(async (req, res) => {
+    const { token } = req.body;
 
-  try {
     const ticket = await client.verifyIdToken({
       idToken: token,
       audience: process.env.GOOGLE_CLIENT_ID,
@@ -135,31 +154,34 @@ router.post('/google-login', async (req, res) => {
       role: user.role,
       token: jwtToken,
     });
-  } catch (err) {
-    console.error('Google login error:', err);
-    res.status(500).json({ message: 'Google login failed' });
-  }
-});
+  })
+);
 
-// ==========================
-// GET USER PROFILE
-// ==========================
-router.get('/profile', async (req, res) => {
-  try {
+// ============================
+// Get User Profile
+// ============================
+router.get(
+  '/profile',
+  asyncHandler(async (req, res) => {
     const authHeader = req.headers.authorization || '';
     const token = authHeader.split(' ')[1];
-    if (!token)
-      return res.status(401).json({ message: 'No token provided' });
+
+    if (!token) {
+      res.status(401);
+      throw new Error('No token provided');
+    }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.id).select('-password');
-    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    if (!user) {
+      res.status(404);
+      throw new Error('User not found');
+    }
 
     res.json(user);
-  } catch (err) {
-    console.error('Profile fetch error:', err);
-    res.status(500).json({ message: err.message });
-  }
-});
+  })
+);
 
 module.exports = router;
+
