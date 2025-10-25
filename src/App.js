@@ -22,6 +22,7 @@ import { CartProvider } from './contexts/CartContext';
 import AdminDashboard from './components/AdminDashboard';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import StaticPage from './pages/StaticPage';
 import MangaCategoryPage from './pages/MangaCategoryPage'; // ✅ Generic manga category
 import './styles/Responsive.css';
 import './App.css';
@@ -82,6 +83,12 @@ const AppLayout = () => {
         <Route
           path="/young-girls-manga/:subcategory"
           element={<MangaCategoryPage baseCategory="young-girls-manga" heading="YOUNG GIRLS MANGA" />}
+        />
+
+        {/* ✅ Static Pages (About, Contact, Privacy Policy, FAQs, etc.) */}
+        <Route
+          path="/:slug"
+          element={<StaticPage />}
         />
 
         {/* === Admin routes === */}

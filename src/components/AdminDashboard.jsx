@@ -10,6 +10,7 @@ import CategoryManagement from './admin/CategoryManagement'; // ✅ NEW import
 import './AdminDashboard.css';
 import BannerManagement from './admin/BannerManagement';
 import AdminOverview from './admin/AdminOverview';
+import StaticPageManagement from "./admin/StaticPageManagement";
 
 
 const AdminDashboard = () => {
@@ -46,7 +47,7 @@ const AdminDashboard = () => {
               <Link to="/admin/products">Products</Link>
             </li>
             <li>
-              <Link to="/admin/categories">Categories</Link> {/* ✅ NEW LINK */}
+              <Link to="/admin/categories">Categories</Link> 
             </li>
             <li>
               <Link to="/admin/users">Users</Link>
@@ -57,6 +58,7 @@ const AdminDashboard = () => {
             <li>
               <Link to="/admin/banners">Banners</Link>
             </li>
+            <li><Link to="/admin/static-pages">Static Pages</Link></li>
           </ul>
         </nav>
 
@@ -77,6 +79,7 @@ const AdminDashboard = () => {
         <Route path="users" element={<UserManagement />} />
         <Route path="orders" element={<OrderManagement />} />
         <Route path="banners" element={<BannerManagement />} />
+        <Route path="static-pages" element={<StaticPageManagement />} />
       </Routes>
       </div>
     </div>

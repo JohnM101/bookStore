@@ -90,6 +90,7 @@ app.use("/api/cms/banners", require("./routes/cmsBannerRoutes"));
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/email", require("./routes/emailVerificationRoutes"));
 app.use("/api/users", require("./routes/accountRoutes"));
+app.use("/api/static-pages", require("./routes/staticPageRoutes"));
 
 // 🛡️ Admin routes (protected)
 app.use("/api/admin", protect, admin, require("./routes/adminRoutes"));
