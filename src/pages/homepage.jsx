@@ -1,7 +1,10 @@
-// src/pages/Homepage.jsx
+// ============================================================
+// ✅ src/pages/Homepage.jsx — Unified Featured + Category Grouping
+// ============================================================
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
+import DisplayProductCard from "../components/DisplayProductCard";
 import "./homepage.css";
 
 const CATEGORY_COLORS = {
@@ -12,81 +15,80 @@ const CATEGORY_COLORS = {
 
 const normalizeSlug = (str) => str?.toLowerCase().replace(/\s+/g, "-").trim();
 
+const API_URL =
+  process.env.REACT_APP_API_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  "https://bookstore-0hqj.onrender.com";
+
 const Homepage = () => {
   const [banners, setBanners] = useState([]);
   const [current, setCurrent] = useState(0);
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const [productData, setProductData] = useState({});
   const [loading, setLoading] = useState(true);
-  const [categories, setCategories] = useState([]);
-  const [featured, setFeatured] = useState({ promotions: [], newArrivals: [], popular: [] });
+  const [featured, setFeatured] = useState({
+    promotions: [],
+    newArrivals: [],
+    popular: [],
+  });
   const navigate = useNavigate();
 
-  const API_URL =
-    process.env.REACT_APP_API_URL ||
-    process.env.NEXT_PUBLIC_API_URL ||
-    "https://bookstore-0hqj.onrender.com";
+  // ============================================================
+  // 🔹 Helper: Group Products by Slug (deduplicate variants)
+  // ============================================================
+  const groupProducts = (list = []) => {
+    const grouped = list.reduce((acc, p) => {
+      const key = p.slug || p.parentId || p._id?.split("-")[0] || p._id;
+      if (!acc[key]) {
+        acc[key] = {
+          _id: key,
+          slug: p.slug,
+          name: p.name,
+          description: p.description,
+          category: p.category,
+          variants: [],
+          mainImage: p.mainImage || p.albumImages?.[0] || null,
+          createdAt: p.createdAt,
+          updatedAt: p.updatedAt,
+        };
+      }
 
-  // Fetch banners
+      acc[key].variants.push({
+        format: p.format || "Standard",
+        price: Number(p.price) || 0,
+        countInStock: p.countInStock || 0,
+        mainImage: p.mainImage,
+        albumImages: p.albumImages || [],
+      });
+      return acc;
+    }, {});
+    return Object.values(grouped);
+  };
+
+  // ============================================================
+  // 🔹 Fetch CMS Banners
+  // ============================================================
   useEffect(() => {
     const fetchBanners = async () => {
       try {
         const res = await fetch(`${API_URL}/api/cms/banners?active=true`);
         const data = await res.json();
-        const active = data.filter((b) => b.isActive).sort((a, b) => a.order - b.order);
+        const active = Array.isArray(data)
+          ? data
+              .filter((b) => b.isActive)
+              .sort((a, b) => (a.order || 0) - (b.order || 0))
+          : [];
         setBanners(active);
       } catch (err) {
         console.error("❌ Error fetching banners:", err);
       }
     };
     fetchBanners();
-  }, [API_URL]);
+  }, []);
 
-  // Fetch categories
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const res = await fetch(`${API_URL}/api/categories`);
-        const data = await res.json();
-        setCategories(data);
-      } catch (err) {
-        console.error("❌ Error fetching categories:", err);
-      }
-    };
-    fetchCategories();
-  }, [API_URL]);
-
-  // ✅ Fetch products (grouped by product)
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const res = await fetch(`${API_URL}/api/products`);
-        if (!res.ok) throw new Error("Failed to fetch products");
-        const allProducts = await res.json();
-
-        // Group by category (only one entry per product)
-        const grouped = allProducts.reduce((acc, product) => {
-          const catSlug = normalizeSlug(product.category);
-          if (!acc[catSlug]) acc[catSlug] = [];
-
-          // Avoid duplicates (based on parentId or slug)
-          if (!acc[catSlug].some((p) => p.slug === product.slug)) {
-            acc[catSlug].push(product);
-          }
-          return acc;
-        }, {});
-
-        setProductData(grouped);
-      } catch (err) {
-        console.error("❌ Error fetching products:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProducts();
-  }, [API_URL]);
-
-  // ✅ Fetch featured sections
+  // ============================================================
+  // 🔹 Fetch Featured Products (grouped)
+  // ============================================================
   useEffect(() => {
     const fetchFeatured = async () => {
       try {
@@ -94,9 +96,9 @@ const Homepage = () => {
         if (!res.ok) throw new Error("Failed to fetch featured");
         const data = await res.json();
         setFeatured({
-          promotions: data.promotions || [],
-          newArrivals: data.newArrivals || [],
-          popular: data.popular || [],
+          promotions: groupProducts(data.promotions || []),
+          newArrivals: groupProducts(data.newArrivals || []),
+          popular: groupProducts(data.popular || []),
         });
       } catch (err) {
         console.error("❌ Error fetching featured:", err);
@@ -104,12 +106,51 @@ const Homepage = () => {
       }
     };
     fetchFeatured();
-  }, [API_URL]);
+  }, []);
 
-  // Disclaimer modal
+  // ============================================================
+  // 🔹 Fetch All Products and Group by Category
+  // ============================================================
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch(`${API_URL}/api/products`);
+        if (!res.ok) throw new Error("Failed to fetch products");
+        const allProducts = await res.json();
+
+        const groupedByCategory = allProducts.reduce((acc, p) => {
+          const catSlug = normalizeSlug(p.category) || "uncategorized";
+          if (!acc[catSlug]) acc[catSlug] = [];
+          acc[catSlug].push(p);
+          return acc;
+        }, {});
+
+        const finalGrouped = Object.entries(groupedByCategory).reduce(
+          (acc, [cat, list]) => {
+            acc[cat] = groupProducts(list);
+            return acc;
+          },
+          {}
+        );
+
+        setProductData(finalGrouped);
+      } catch (err) {
+        console.error("❌ Error fetching products:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
+  }, []);
+
+  // ============================================================
+  // 🔹 Disclaimer Modal
+  // ============================================================
   useEffect(() => {
     if (!localStorage.getItem("hasSeenDisclaimer")) setShowDisclaimer(true);
   }, []);
+
   const handleProceed = () => {
     localStorage.setItem("hasSeenDisclaimer", "true");
     setShowDisclaimer(false);
@@ -117,115 +158,103 @@ const Homepage = () => {
 
   const user = JSON.parse(localStorage.getItem("user"));
 
-  // Banner auto-slide
+  // ============================================================
+  // 🔹 Carousel Auto-Slide
+  // ============================================================
   useEffect(() => {
     if (banners.length === 0) return;
-    const interval = setInterval(() => {
-      setCurrent((prev) => (prev + 1) % banners.length);
-    }, 6000);
+    const interval = setInterval(
+      () => setCurrent((prev) => (prev + 1) % banners.length),
+      6000
+    );
     return () => clearInterval(interval);
   }, [banners]);
 
-  // ✅ Helper: format variants display
-  const renderFormats = (variants = []) => {
-    if (!variants.length) return <span>N/A</span>;
-    return (
-      <div className="formats">
-        {variants.map((v, i) => (
-          <span key={i} className="format-item">
-            {v.format}: ₱{v.price?.toFixed(2) || "N/A"}
-          </span>
-        ))}
-      </div>
-    );
-  };
+  // ============================================================
+  // 🔹 Deduplication Across Sections
+  // ============================================================
+  const displayedSlugs = new Set();
 
-  // ✅ Render product section for each category
-  const renderProductSection = (slug, products) => {
-    if (!products || products.length === 0) return null;
-    const bgColor = CATEGORY_COLORS[slug]?.bg || "#ccc";
-    const textColor = CATEGORY_COLORS[slug]?.text || "#fff";
-
-    // Combine product entries (deduplicate by slug)
-    const uniqueProducts = Object.values(
-      products.reduce((acc, p) => {
-        const key = p.slug || p._id;
-        if (!acc[key]) acc[key] = { ...p, variants: [] };
-        if (p.variants) acc[key].variants = p.variants;
-        return acc;
-      }, {})
-    );
-
-    return (
-      <div
-        key={slug}
-        className="product-section"
-        style={{ "--section-color": bgColor, "--section-text-color": textColor }}
-      >
-        <h2 className="section-heading">{slug.replace(/-/g, " ").toUpperCase()}</h2>
-        <div className="product-list">
-          {uniqueProducts.slice(0, 8).map((p) => (
-            <div
-              className="product-card"
-              key={p._id}
-              onClick={() => navigate(`/product/${p.slug || p._id}`)}
-            >
-              <img
-                src={p.variants?.[0]?.mainImage || "/assets/placeholder-image.png"}
-                alt={p.name}
-                onError={(e) => (e.target.src = "/assets/placeholder-image.png")}
-              />
-              <p className="product-name">{p.name}</p>
-              <p className="product-subtitle">{p.description?.substring(0, 40)}...</p>
-              {renderFormats(p.variants)}
-            </div>
-          ))}
-        </div>
-        <Link to={`/${slug}`} className="view-all">
-          View All →
-        </Link>
-      </div>
-    );
-  };
-
-  // ✅ Render featured sections
+  // ============================================================
+  // 🔹 Render Featured Section
+  // ============================================================
   const renderFeaturedBlock = (title, list, className) => {
-    if (!list || list.length === 0) return null;
-
-    // Group by product slug
-    const unique = Object.values(
-      list.reduce((acc, p) => {
-        const key = p.slug || p._id;
-        if (!acc[key]) acc[key] = { ...p, variants: [] };
-        if (p.variants) acc[key].variants = p.variants;
-        return acc;
-      }, {})
-    );
-
+    if (!Array.isArray(list) || list.length === 0) return null;
     return (
-      <div className={`product-section ${className}`}>
-        <h2 className="section-heading">{title}</h2>
-        <div className="product-list">
-          {unique.slice(0, 8).map((p) => (
-            <div
-              key={p._id}
-              className="product-card"
-              onClick={() => navigate(`/product/${p.slug || p._id}`)}
-            >
-              <img
-                src={p.variants?.[0]?.mainImage || "/assets/placeholder-image.png"}
-                alt={p.name}
-                onError={(e) => (e.target.src = "/assets/placeholder-image.png")}
-              />
-              <p className="product-name">{p.name}</p>
-              {renderFormats(p.variants)}
-            </div>
-          ))}
+      <section className={`product-section featured-section ${className}`}>
+        <div className="section-header">
+          <h2 className="section-heading">{title}</h2>
+          <Link
+            to={`/collections/${title.toLowerCase().replace(/\s+/g, "-")}`}
+            className="view-all small"
+          >
+            View All
+          </Link>
         </div>
-      </div>
+        <div className="product-shelf">
+          {list.slice(0, 12).map((p) => {
+            if (displayedSlugs.has(p.slug)) return null;
+            displayedSlugs.add(p.slug);
+            return (
+              <DisplayProductCard
+                key={p._id}
+                product={p}
+                onClick={() => navigate(`/product/${p.slug || p._id}`)}
+              />
+            );
+          })}
+        </div>
+      </section>
     );
   };
 
+  // ============================================================
+  // 🔹 Render Category Section
+  // ============================================================
+  const renderCategorySection = (slug, products) => {
+    if (!products || products.length === 0) return null;
+    const bgColor = CATEGORY_COLORS[slug]?.bg || "#f3f4f6";
+    const textColor = CATEGORY_COLORS[slug]?.text || "#111";
+
+    return (
+      <section
+        key={slug}
+        className="product-section category-section"
+        style={{
+          "--section-color": bgColor,
+          "--section-text-color": textColor,
+        }}
+      >
+        <div className="section-header">
+          <h2 className="section-heading">
+            {slug.replace(/-/g, " ").toUpperCase()}
+          </h2>
+          <Link to={`/${slug}`} className="view-all small">
+            View All
+          </Link>
+        </div>
+        <div className="product-grid">
+          {products
+            .filter((p) => !displayedSlugs.has(p.slug))
+            .slice(0, 8)
+            .map((p) => {
+              displayedSlugs.add(p.slug);
+              return (
+                <DisplayProductCard
+                  key={p._id}
+                  product={p}
+                  onClick={() => navigate(`/product/${p.slug || p._id}`)}
+                />
+              );
+            })}
+        </div>
+      </section>
+    );
+  };
+
+  // ============================================================
+  // 🔹 Render Loading / Main Page
+  // ============================================================
   if (loading) return <div className="loading">Loading products...</div>;
 
   return (
@@ -236,10 +265,16 @@ const Homepage = () => {
       {showDisclaimer && (
         <div className="disclaimer-overlay">
           <div className="disclaimer-box">
-            <img src="/assets/logo.png" alt="Logo" className="disclaimer-logo" />
+            <img
+              src="/assets/logo.png"
+              alt="Logo"
+              className="disclaimer-logo"
+            />
             <h6 className="disclaimer-header">Welcome!</h6>
             <p className="disclaimer-text">
-              {user ? `Hello ${user.firstName} ${user.lastName}!` : "Welcome to our bookstore!"}
+              {user
+                ? `Hello ${user.firstName} ${user.lastName}!`
+                : "Welcome to our bookstore!"}
             </p>
             <button className="disclaimer-button" onClick={handleProceed}>
               Proceed
@@ -248,24 +283,38 @@ const Homepage = () => {
         </div>
       )}
 
-      {/* Banner Carousel */}
+      {/* Carousel */}
       <div className="carousel-wrapper">
         {banners.length > 0 ? (
           banners.map((b, i) => (
             <div
               key={b._id}
-              className={`carousel-slide ${i === current ? "active" : ""} ${b.animationType}`}
+              className={`carousel-slide ${
+                i === current ? "active" : ""
+              } ${b.animationType || ""}`}
               style={{ backgroundColor: b.backgroundColor || "#fff" }}
             >
               <picture>
-                {b.imageMobile && <source srcSet={b.imageMobile} media="(max-width:768px)" />}
-                <img src={b.imageDesktop} alt={b.title} className="carousel-image" />
+                {b.imageMobile && (
+                  <source srcSet={b.imageMobile} media="(max-width:768px)" />
+                )}
+                <img
+                  src={b.imageDesktop}
+                  alt={b.title}
+                  className="carousel-image"
+                />
               </picture>
+
               <div className="carousel-content">
                 <h2 className="carousel-title">{b.title}</h2>
-                {b.subtitle && <p className="carousel-subtitle">{b.subtitle}</p>}
+                {b.subtitle && (
+                  <p className="carousel-subtitle">{b.subtitle}</p>
+                )}
                 {b.ctaText && (
-                  <button className="carousel-btn" onClick={() => navigate(b.ctaLink || "/")}>
+                  <button
+                    className="carousel-btn"
+                    onClick={() => navigate(b.ctaLink || "/")}
+                  >
                     {b.ctaText}
                   </button>
                 )}
@@ -273,19 +322,27 @@ const Homepage = () => {
             </div>
           ))
         ) : (
-          <img src="/assets/default-banner.png" alt="Default Banner" className="banner-image" />
+          <img
+            src="/assets/default-banner.png"
+            alt="Default Banner"
+            className="banner-image"
+          />
         )}
       </div>
 
       {/* Featured Sections */}
       <div className="featured-wrapper">
-        {renderFeaturedBlock("🔥 Promotions", featured.promotions, "featured promotions")}
-        {renderFeaturedBlock("🆕 New Arrivals", featured.newArrivals, "featured new-arrivals")}
-        {renderFeaturedBlock("⭐ Popular Products", featured.popular, "featured popular")}
+        {renderFeaturedBlock("🔥 Promotions", featured.promotions, "promotions")}
+        {renderFeaturedBlock("🆕 New Arrivals", featured.newArrivals, "new-arrivals")}
+        {renderFeaturedBlock("⭐ Popular Products", featured.popular, "popular")}
       </div>
 
-      {/* Category-based Product Sections */}
-      {Object.entries(productData).map(([slug, products]) => renderProductSection(slug, products))}
+      {/* Category Sections */}
+      <main>
+        {Object.entries(productData).map(([slug, products]) =>
+          renderCategorySection(slug, products)
+        )}
+      </main>
     </div>
   );
 };
