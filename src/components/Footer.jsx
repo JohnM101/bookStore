@@ -1,5 +1,5 @@
 // ============================================================
-// ✅ src/components/Footer.jsx
+// ✅ src/components/Footer.jsx (Dynamic Static Pages Version)
 // ============================================================
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
@@ -18,15 +18,13 @@ const Footer = () => {
         if (!res.ok) throw new Error("Failed to fetch pages");
         const data = await res.json();
         setPages(data);
+        console.log("📄 Footer fetched static pages:", data);
       } catch (err) {
         console.error("❌ Error fetching static pages:", err);
       }
     };
     fetchPages();
   }, []);
-
-  // Helper: Filter specific pages by slug
-  const getPageBySlug = (slug) => pages.find((p) => p.slug === slug);
 
   return (
     <footer className="footer">
@@ -56,64 +54,30 @@ const Footer = () => {
           <div className="footer-column">
             <h3 className="footer-heading">Customer Support</h3>
             <ul>
-              {/* ✅ Dynamically insert FAQs and Contact pages */}
-              {getPageBySlug("faqs") && (
-                <li>
-                  <Link to={`/${getPageBySlug("faqs").slug}`}>
-                    {getPageBySlug("faqs").title}
-                  </Link>
-                </li>
-              )}
-              {getPageBySlug("contact") && (
-                <li>
-                  <Link to={`/${getPageBySlug("contact").slug}`}>
-                    {getPageBySlug("contact").title}
-                  </Link>
-                </li>
-              )}
-              <li>
-                <a href="tel:+631234567">+63 1234 5678</a>
-              </li>
-              {getPageBySlug("return-policy") && (
-                <li>
-                  <Link to={`/${getPageBySlug("return-policy").slug}`}>
-                    {getPageBySlug("return-policy").title}
-                  </Link>
-                </li>
-              )}
+              <li><a href="tel:+631234567">+63 1234 5678</a></li>
+              <li><Link to="/track-order">Track Order</Link></li>
+              <li><Link to="/return-policy">Return Policy</Link></li>
             </ul>
           </div>
 
-          {/* Explore Section */}
+          {/* Dynamic Static Pages Section */}
           <div className="footer-column">
             <h3 className="footer-heading">Explore</h3>
             <ul>
-              <li>
-                <Link to="/varieties">All Products</Link>
-              </li>
-              <li>
-                <Link to="/new-offers">New Offers</Link>
-              </li>
-
-              {/* ✅ Dynamically insert About and Privacy pages */}
-              {getPageBySlug("about") && (
-                <li>
-                  <Link to={`/${getPageBySlug("about").slug}`}>
-                    {getPageBySlug("about").title}
-                  </Link>
-                </li>
+              {/* ✅ Automatically show all active static pages */}
+              {pages.length > 0 ? (
+                pages.map((page) => (
+                  <li key={page._id}>
+                    <Link to={`/${page.slug}`}>{page.title}</Link>
+                  </li>
+                ))
+              ) : (
+                <li style={{ opacity: 0.7 }}>No pages yet</li>
               )}
-              {getPageBySlug("privacy-policy") && (
-                <li>
-                  <Link to={`/${getPageBySlug("privacy-policy").slug}`}>
-                    {getPageBySlug("privacy-policy").title}
-                  </Link>
-                </li>
-              )}
-
-              <li>
-                <Link to="/">Homepage</Link>
-              </li>
+              {/* Optional extra links */}
+              <li><Link to="/varieties">All Products</Link></li>
+              <li><Link to="/new-offers">New Offers</Link></li>
+              <li><Link to="/">Homepage</Link></li>
             </ul>
           </div>
 

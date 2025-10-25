@@ -1,5 +1,5 @@
 // ============================================================
-// ✅ src/components/admin/StaticPageManagement.jsx
+// ✅ src/components/admin/StaticPageManagement.jsx (Auto Slug from Title)
 // ============================================================
 import React, { useEffect, useState } from "react";
 import { useUser } from "../../contexts/UserContext";
@@ -21,7 +21,21 @@ const StaticPageManagement = () => {
   const [editingPage, setEditingPage] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Fetch all pages
+  // ============================================================
+  // 🔧 Utility: Generate slug from title
+  // ============================================================
+  const generateSlug = (title) => {
+    return title
+      .trim()
+      .toLowerCase()
+      .replace(/^\/+/, "") // remove leading slashes
+      .replace(/\s+/g, "-") // replace spaces with hyphens
+      .replace(/[^a-z0-9\-]/g, ""); // remove invalid chars
+  };
+
+  // ============================================================
+  // 🔄 Fetch all pages
+  // ============================================================
   const fetchPages = async () => {
     try {
       setLoading(true);
@@ -37,10 +51,22 @@ const StaticPageManagement = () => {
 
   useEffect(() => {
     if (user?.token) fetchPages();
-  }, [user]);
+  }, [user?.token]);
 
+  // ============================================================
+  // 🧠 Handle form submit (slug auto-cleaned)
+  // ============================================================
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const cleanSlug = formData.slug
+      .trim()
+      .replace(/^\/+/, "")
+      .replace(/\s+/g, "-")
+      .toLowerCase();
+
+    const cleanData = { ...formData, slug: cleanSlug };
+
     const method = editingPage ? "PUT" : "POST";
     const url = editingPage
       ? `${API_URL}/api/static-pages/${editingPage._id}`
@@ -52,11 +78,13 @@ const StaticPageManagement = () => {
         {
           method,
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
+          body: JSON.stringify(cleanData),
         },
         user.token
       );
+
       if (!res.ok) throw new Error("Failed to save page");
+
       fetchPages();
       resetForm();
     } catch (err) {
@@ -64,6 +92,9 @@ const StaticPageManagement = () => {
     }
   };
 
+  // ============================================================
+  // ✏️ Handle edits
+  // ============================================================
   const handleEdit = (page) => {
     setEditingPage(page);
     setFormData({
@@ -74,6 +105,9 @@ const StaticPageManagement = () => {
     });
   };
 
+  // ============================================================
+  // 🗑️ Handle delete
+  // ============================================================
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this page?")) return;
     try {
@@ -89,11 +123,17 @@ const StaticPageManagement = () => {
     }
   };
 
+  // ============================================================
+  // 🔄 Reset form
+  // ============================================================
   const resetForm = () => {
     setFormData({ slug: "", title: "", content: "", isActive: true });
     setEditingPage(null);
   };
 
+  // ============================================================
+  // 🧩 Render
+  // ============================================================
   if (loading) return <div className="loading">Loading pages...</div>;
 
   return (
@@ -101,26 +141,48 @@ const StaticPageManagement = () => {
       <h2>📄 Manage Static Pages</h2>
 
       <form onSubmit={handleSubmit} className="product-form">
-        <div className="form-group">
-          <label>Slug (unique)</label>
-          <input
-            type="text"
-            name="slug"
-            value={formData.slug}
-            onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-            required
-          />
-        </div>
+        {/* Title Field */}
         <div className="form-group">
           <label>Title</label>
           <input
             type="text"
             name="title"
             value={formData.title}
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+            onChange={(e) => {
+              const newTitle = e.target.value;
+              setFormData({
+                ...formData,
+                title: newTitle,
+                // Auto-generate slug only if not editing or slug matches old title-based slug
+                slug:
+                  editingPage && formData.slug !== generateSlug(editingPage.title)
+                    ? formData.slug
+                    : generateSlug(newTitle),
+              });
+            }}
             required
           />
         </div>
+
+        {/* Slug Field (Auto-Generated) */}
+        <div className="form-group">
+          <label>Slug (auto-generated)</label>
+          <input
+            type="text"
+            name="slug"
+            value={formData.slug}
+            onChange={(e) => {
+              // Allow manual override if needed
+              setFormData({ ...formData, slug: generateSlug(e.target.value) });
+            }}
+            required
+          />
+          <small className="slug-hint">
+            Will appear at: <strong>/{formData.slug || "your-slug"}</strong>
+          </small>
+        </div>
+
+        {/* Content Field */}
         <div className="form-group full-width">
           <label>Content</label>
           <textarea
@@ -130,6 +192,8 @@ const StaticPageManagement = () => {
             onChange={(e) => setFormData({ ...formData, content: e.target.value })}
           />
         </div>
+
+        {/* Active Checkbox */}
         <div className="form-group checkbox-group">
           <label>
             <input
@@ -141,6 +205,7 @@ const StaticPageManagement = () => {
           </label>
         </div>
 
+        {/* Buttons */}
         <div className="form-buttons">
           <button type="submit" className="btn-submit">
             {editingPage ? "Update Page" : "Add Page"}
@@ -153,6 +218,7 @@ const StaticPageManagement = () => {
         </div>
       </form>
 
+      {/* Existing Pages Table */}
       <h3>Existing Pages</h3>
       <table className="products-table">
         <thead>
@@ -167,7 +233,7 @@ const StaticPageManagement = () => {
         <tbody>
           {pages.map((p) => (
             <tr key={p._id}>
-              <td>{p.slug}</td>
+              <td>/{p.slug}</td>
               <td>{p.title}</td>
               <td>{p.isActive ? "✅" : "❌"}</td>
               <td>{new Date(p.updatedAt).toLocaleDateString()}</td>
