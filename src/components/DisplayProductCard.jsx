@@ -1,48 +1,70 @@
+// src/components/DisplayProductCard.jsx
 import React, { useMemo } from "react";
 import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
 
 /**
  * DisplayProductCard
- * - Unified display for products that may have multiple variants (formats/offers)
- * - Shows a single representative image
- * - Displays either a single price or a range (min–max)
- * - Shows an "Offers available" badge if multiple formats
+ * Unified product display for grouped variants.
+ *
+ * ✅ Features:
+ * - Displays representative image
+ * - Shows lowest–highest price range if multiple variants
+ * - Shows “Available in X formats” badge
+ * - Automatically handles placeholder fallback
+ * - Works for both grouped and single-variant products
  */
 const DisplayProductCard = ({ product, onClick, className = "" }) => {
   const navigate = useNavigate();
 
-  const { repImage, minPrice, maxPrice, hasMultipleFormats, isPromotion } = useMemo(() => {
+  const { repImage, priceText, formatsCount, mainFormatLabel } = useMemo(() => {
     let repImage = "/assets/placeholder-image.png";
-    let minPrice = null;
-    let maxPrice = null;
-    let isPromotion = product.isPromotion || false;
+    let priceText = "N/A";
+    let formatsCount = 0;
+    let mainFormatLabel = "";
 
-    // If variants exist, calculate price range
     if (Array.isArray(product.variants) && product.variants.length > 0) {
-      const prices = product.variants
-        .map((v) => (typeof v.price === "number" ? v.price : parseFloat(v.price) || 0))
+      const variants = product.variants.filter(
+        (v) => typeof v.price === "number" || parseFloat(v.price)
+      );
+      formatsCount = variants.length;
+
+      const allPrices = variants
+        .map((v) =>
+          typeof v.price === "number" ? v.price : parseFloat(v.price) || 0
+        )
         .filter((p) => p > 0);
 
-      if (prices.length > 0) {
-        minPrice = Math.min(...prices);
-        maxPrice = Math.max(...prices);
+      if (allPrices.length > 0) {
+        const min = Math.min(...allPrices);
+        const max = Math.max(...allPrices);
+        priceText =
+          min === max
+            ? `₱${min.toFixed(2)}`
+            : `₱${min.toFixed(2)} – ₱${max.toFixed(2)}`;
       }
 
-      // Use first available image
-      const vWithImage = product.variants.find((v) => v.mainImage);
-      repImage = (vWithImage && vWithImage.mainImage) || product.mainImage || repImage;
+      // pick representative image
+      const vWithImage = variants.find((v) => v.mainImage);
+      repImage =
+        (vWithImage && vWithImage.mainImage) ||
+        product.mainImage ||
+        "/assets/placeholder-image.png";
+
+      mainFormatLabel = variants[0]?.format || "";
     } else {
-      // Single product fallback
-      minPrice = typeof product.price === "number" ? product.price : parseFloat(product.price) || null;
-      maxPrice = minPrice;
-      repImage = product.mainImage || repImage;
+      // fallback: single variant
+      repImage = product.mainImage || "/assets/placeholder-image.png";
+      const price =
+        typeof product.price === "number"
+          ? product.price
+          : parseFloat(product.price);
+      priceText = price ? `₱${price.toFixed(2)}` : "N/A";
+      formatsCount = product.variantsCount || (product.format ? 1 : 0);
+      mainFormatLabel = product.format || "";
     }
 
-    const hasMultipleFormats =
-      Array.isArray(product.variants) && product.variants.length > 1;
-
-    return { repImage, minPrice, maxPrice, hasMultipleFormats, isPromotion };
+    return { repImage, priceText, formatsCount, mainFormatLabel };
   }, [product]);
 
   const handleClick = () => {
@@ -50,13 +72,6 @@ const DisplayProductCard = ({ product, onClick, className = "" }) => {
     const slug = product.slug || product.parentId || product._id;
     navigate(`/product/${slug}`);
   };
-
-  const displayPrice =
-    minPrice && maxPrice && minPrice !== maxPrice
-      ? `₱${minPrice.toFixed(2)} – ₱${maxPrice.toFixed(2)}`
-      : minPrice
-      ? `₱${minPrice.toFixed(2)}`
-      : "N/A";
 
   return (
     <div
@@ -75,24 +90,26 @@ const DisplayProductCard = ({ product, onClick, className = "" }) => {
           loading="lazy"
           onError={(e) => (e.target.src = "/assets/placeholder-image.png")}
         />
-        {isPromotion && <span className="offer-badge">🔥 On Sale</span>}
+        {formatsCount > 1 && (
+          <span className="variant-count">
+            {formatsCount} formats available
+          </span>
+        )}
       </div>
 
       <div className="product-info">
-        <p className="product-name">{product.name}</p>
-
+        <p className="product-name" data-format={mainFormatLabel}>
+          {product.name}
+        </p>
         {product.description && (
           <p className="product-subtitle">
-            {product.description.substring(0, 70)}
-            {product.description.length > 70 ? "…" : ""}
+            {product.description?.substring(0, 80)}
+            {product.description?.length > 80 ? "…" : ""}
           </p>
         )}
-
-        <p className="price">{displayPrice}</p>
-
-        {hasMultipleFormats && (
-          <p className="multi-format-note">Multiple formats available</p>
-        )}
+        <div className="product-meta">
+          <p className="price">{priceText}</p>
+        </div>
       </div>
     </div>
   );
