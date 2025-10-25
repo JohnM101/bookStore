@@ -11,7 +11,7 @@ import './AdminDashboard.css';
 import BannerManagement from './admin/BannerManagement';
 import AdminOverview from './admin/AdminOverview';
 import StaticPageManagement from "./admin/StaticPageManagement";
-import FeaturedManagement from './admin/FeaturedManagement'; // NEW
+
 
 const AdminDashboard = () => {
   const { isAdmin, logout } = useUser();
