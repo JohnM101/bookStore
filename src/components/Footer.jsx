@@ -1,5 +1,5 @@
 // ============================================================
-// ✅ src/components/Footer.jsx (Dynamic Static Pages Version)
+// ✅ src/components/Footer.jsx — Clean & De-Duplicated Version
 // ============================================================
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
@@ -17,8 +17,25 @@ const Footer = () => {
         const res = await fetch(`${API_URL}/api/static-pages?active=true`);
         if (!res.ok) throw new Error("Failed to fetch pages");
         const data = await res.json();
-        setPages(data);
-        console.log("📄 Footer fetched static pages:", data);
+
+        // ✅ Filter only common static pages
+        const filtered = data.filter((page) =>
+          [
+            "about-us",
+            "privacy-policy",
+            "return-policy",
+            "contact",
+            "faqs",
+          ].includes(page.slug)
+        );
+
+        // ✅ Sort alphabetically by title
+        const sorted = filtered.sort((a, b) =>
+          a.title.localeCompare(b.title)
+        );
+
+        setPages(sorted);
+        console.log("📄 Footer loaded static pages:", sorted);
       } catch (err) {
         console.error("❌ Error fetching static pages:", err);
       }
@@ -56,7 +73,7 @@ const Footer = () => {
             <ul>
               <li><a href="tel:+631234567">+63 1234 5678</a></li>
               <li><Link to="/track-order">Track Order</Link></li>
-              <li><Link to="/return-policy">Return Policy</Link></li>
+              {/* ⚠️ Removed duplicate Return Policy */}
             </ul>
           </div>
 
@@ -64,7 +81,6 @@ const Footer = () => {
           <div className="footer-column">
             <h3 className="footer-heading">Explore</h3>
             <ul>
-              {/* ✅ Automatically show all active static pages */}
               {pages.length > 0 ? (
                 pages.map((page) => (
                   <li key={page._id}>
@@ -74,7 +90,8 @@ const Footer = () => {
               ) : (
                 <li style={{ opacity: 0.7 }}>No pages yet</li>
               )}
-              {/* Optional extra links */}
+
+              {/* Extra internal links (not in static pages) */}
               <li><Link to="/varieties">All Products</Link></li>
               <li><Link to="/new-offers">New Offers</Link></li>
               <li><Link to="/">Homepage</Link></li>
@@ -101,7 +118,7 @@ const Footer = () => {
       </div>
 
       <p className="footer-bottom">
-        &copy; {new Date().getFullYear()} Anime&You. All rights reserved.
+        &copy; {new Date().getFullYear()} Komikku Vault. All rights reserved.
       </p>
     </footer>
   );
