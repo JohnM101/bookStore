@@ -175,9 +175,17 @@ const Homepage = () => {
   }, [banners]);
 
   // ==========================================================
-  // ✨ DEDUPLICATION LOGIC
+  // ✨ FIXED DEDUPLICATION LOGIC
   // ==========================================================
-  const displayedSlugs = new Set();
+  const featuredSlugs = useMemo(
+    () =>
+      new Set([
+        ...featured.promotions.map((p) => p.slug),
+        ...featured.newArrivals.map((p) => p.slug),
+        ...featured.popular.map((p) => p.slug),
+      ]),
+    [featured]
+  );
 
   // --- featured block
   const renderFeaturedBlock = (title, list, className) => {
@@ -194,19 +202,15 @@ const Homepage = () => {
           </Link>
         </div>
         <div className="product-shelf">
-          {list.slice(0, 12).map((p) => {
-            if (displayedSlugs.has(p.slug)) return null;
-            displayedSlugs.add(p.slug);
-            return (
-              <DisplayProductCard
-                key={p._id}
-                product={p}
-                onClick={() =>
-                  navigate(`/product/${p.slug || p.parentId || p._id}`)
-                }
-              />
-            );
-          })}
+          {list.slice(0, 12).map((p) => (
+            <DisplayProductCard
+              key={p._id}
+              product={p}
+              onClick={() =>
+                navigate(`/product/${p.slug || p.parentId || p._id}`)
+              }
+            />
+          ))}
         </div>
       </section>
     );
@@ -237,18 +241,15 @@ const Homepage = () => {
         </div>
         <div className="product-grid">
           {products
-            .filter((p) => !displayedSlugs.has(p.slug))
+            .filter((p) => !featuredSlugs.has(p.slug)) // ✅ only skip featured ones
             .slice(0, 8)
-            .map((p) => {
-              displayedSlugs.add(p.slug);
-              return (
-                <DisplayProductCard
-                  key={p._id}
-                  product={p}
-                  onClick={() => navigate(`/product/${p.slug || p._id}`)}
-                />
-              );
-            })}
+            .map((p) => (
+              <DisplayProductCard
+                key={p._id}
+                product={p}
+                onClick={() => navigate(`/product/${p.slug || p._id}`)}
+              />
+            ))}
         </div>
       </section>
     );
@@ -266,11 +267,7 @@ const Homepage = () => {
       {showDisclaimer && (
         <div className="disclaimer-overlay">
           <div className="disclaimer-box">
-            <img
-              src="/assets/logo.png"
-              alt="Logo"
-              className="disclaimer-logo"
-            />
+            <img src="/assets/logo.png" alt="Logo" className="disclaimer-logo" />
             <h6 className="disclaimer-header">Welcome!</h6>
             <p className="disclaimer-text">
               {user
@@ -297,10 +294,7 @@ const Homepage = () => {
             >
               <picture>
                 {b.imageMobile && (
-                  <source
-                    srcSet={b.imageMobile}
-                    media="(max-width:768px)"
-                  />
+                  <source srcSet={b.imageMobile} media="(max-width:768px)" />
                 )}
                 <img
                   src={b.imageDesktop}
