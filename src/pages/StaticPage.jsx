@@ -1,11 +1,9 @@
 // ============================================================
-// ✅ src/pages/StaticPage.jsx — Styled & Working Version
+// ✅ src/pages/StaticPage.jsx — Fixed (No Double Navbar/Footer)
 // ============================================================
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import "./StaticPage.css"; // ✅ import dedicated CSS
-import Navbar from "../components/Navbar";
-import Footer from "../components/Footer";
+import "./StaticPage.css"; // ✅ dedicated CSS
 
 const API_URL =
   process.env.REACT_APP_API_URL ||
@@ -38,24 +36,20 @@ const StaticPage = () => {
   if (!page) return <div className="not-found">Page not found.</div>;
 
   return (
-    <>
-      <Navbar />
-      <div className="static-page container">
-        <h1>{page.title}</h1>
+    <div className="static-page container">
+      <h1>{page.title}</h1>
 
-        {/* ✅ Safely render HTML content */}
-        <div
-          className="static-page-content"
-          dangerouslySetInnerHTML={{
-            __html:
-              page.content?.trim() === ""
-                ? "<p><em>No content available.</em></p>"
-                : page.content,
-          }}
-        />
-      </div>
-      <Footer />
-    </>
+      {/* ✅ Safely render HTML content */}
+      <div
+        className="static-page-content"
+        dangerouslySetInnerHTML={{
+          __html:
+            page.content?.trim() === ""
+              ? "<p><em>No content available.</em></p>"
+              : page.content,
+        }}
+      />
+    </div>
   );
 };
 
