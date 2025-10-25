@@ -1,5 +1,5 @@
 // ============================================================
-// ✅ ProductPage.jsx — Medium Image + Smart Read More Scroll
+// ✅ ProductPage.jsx — Final Version (With Product Status Support)
 // ============================================================
 import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
@@ -22,7 +22,7 @@ const ProductPage = () => {
   const descriptionTabRef = useRef(null);
 
   // ============================================================
-  // 🔹 Fetch product details from backend
+  // 🔹 Fetch product details
   // ============================================================
   useEffect(() => {
     const fetchProduct = async () => {
@@ -30,6 +30,14 @@ const ProductPage = () => {
         setLoading(true);
         const res = await axios.get(`${API_URL}/api/products/${slug}`);
         const data = res.data;
+
+        // ✅ Block inactive products (security)
+        if (data.status === "Inactive") {
+          setError("This product is currently unavailable.");
+          setLoading(false);
+          return;
+        }
+
         setProduct(data);
 
         if (data.variants && data.variants.length > 0) {
@@ -54,6 +62,7 @@ const ProductPage = () => {
         setLoading(false);
       }
     };
+
     fetchProduct();
   }, [slug]);
 
@@ -78,9 +87,6 @@ const ProductPage = () => {
         })
       : "N/A";
 
-  // ============================================================
-  // 🔹 Handle "Read More" to scroll to tab
-  // ============================================================
   const handleReadMoreClick = () => {
     setShowFullDescription(true);
     setActiveTab("description");
@@ -96,6 +102,14 @@ const ProductPage = () => {
   if (loading) return <div className="loading">Loading product...</div>;
   if (error) return <div className="error-message">{error}</div>;
   if (!product) return <div className="error">Product not found.</div>;
+
+  // Determine stock-based status dynamically for safety
+  const totalStock = product.variants?.reduce(
+    (sum, v) => sum + (v.countInStock || 0),
+    0
+  );
+  const computedStatus =
+    totalStock === 0 ? "Out of Stock" : product.status || "Active";
 
   // ============================================================
   return (
@@ -145,6 +159,19 @@ const ProductPage = () => {
           <p className="author">By {product.author || "Unknown Author"}</p>
           <p className="age">Age: {product.age || "All Ages"}</p>
 
+          {/* ✅ Product Status Display */}
+          <p
+            className={`product-status ${
+              computedStatus === "Active"
+                ? "status-active"
+                : computedStatus === "Inactive"
+                ? "status-inactive"
+                : "status-out"
+            }`}
+          >
+            Status: {computedStatus}
+          </p>
+
           {/* Variants */}
           {product.variants?.length > 0 && (
             <div className="variant-options">
@@ -175,7 +202,6 @@ const ProductPage = () => {
             </div>
           )}
 
-          {/* Publication Date */}
           <p className="pub-date">
             Publication Date: {formatDate(product.publicationDate)}
           </p>
@@ -188,19 +214,28 @@ const ProductPage = () => {
                 : `${product.description?.slice(0, 200)}...`}
             </p>
             {product.description?.length > 200 && (
-              <button
-                className="read-more"
-                onClick={handleReadMoreClick}
-              >
+              <button className="read-more" onClick={handleReadMoreClick}>
                 Read More
               </button>
             )}
           </div>
 
-          {/* 🛒 Buy Box (Centered) */}
+          {/* 🛒 Buy Box */}
           <div className="buy-box inline">
-            <button className="add-to-cart-btn">Add to Cart</button>
-            <button className="sign-in-button">Buy Now</button>
+            {computedStatus === "Out of Stock" ? (
+              <button className="out-stock-btn" disabled>
+                Out of Stock
+              </button>
+            ) : computedStatus === "Inactive" ? (
+              <button className="inactive-btn" disabled>
+                Product Unavailable
+              </button>
+            ) : (
+              <>
+                <button className="add-to-cart-btn">Add to Cart</button>
+                <button className="sign-in-button">Buy Now</button>
+              </>
+            )}
           </div>
         </div>
       </div>

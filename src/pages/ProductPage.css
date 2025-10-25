@@ -856,3 +856,35 @@ html {
   text-decoration: underline;
   color: #e06666;
 }
+
+/* ============================================================
+   ✅ Product Status Styling
+============================================================ */
+.product-status {
+  margin-top: 10px;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.status-active {
+  color: #28a745;
+}
+
+.status-inactive {
+  color: #999;
+}
+
+.status-out {
+  color: #e74c3c;
+}
+
+/* Disabled Buttons */
+.out-stock-btn,
+.inactive-btn {
+  background-color: #ccc;
+  color: #444;
+  cursor: not-allowed;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+}
