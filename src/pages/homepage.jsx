@@ -65,15 +65,13 @@ const Homepage = () => {
     fetchCategories();
   }, [API_URL]);
 
-  // Fetch products (expanded variant entries)
+  // Fetch products
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         const res = await fetch(`${API_URL}/api/products`);
         if (!res.ok) throw new Error("Failed to fetch products");
         const allProducts = await res.json();
-
-        // group by category
         const grouped = allProducts.reduce((acc, product) => {
           const catSlug = normalizeSlug(product.category);
           if (!acc[catSlug]) acc[catSlug] = [];
@@ -104,7 +102,6 @@ const Homepage = () => {
         });
       } catch (err) {
         console.error("❌ Error fetching featured:", err);
-        setFeatured({ promotions: [], newArrivals: [], popular: [] });
       }
     };
     fetchFeatured();
@@ -131,7 +128,7 @@ const Homepage = () => {
     return () => clearInterval(interval);
   }, [banners]);
 
-  // Helper to group variants by parent
+  // Group variants by parent
   const groupProductsByParent = (products) => {
     const grouped = {};
     for (const p of products) {
@@ -155,6 +152,7 @@ const Homepage = () => {
   const VariantCard = ({ product }) => {
     const [activeIndex, setActiveIndex] = useState(0);
     const [hovered, setHovered] = useState(false);
+    const [fading, setFading] = useState(false);
     const intervalRef = useRef(null);
 
     const variants = product.variants || [];
@@ -164,10 +162,15 @@ const Homepage = () => {
       product.mainImage ||
       "/assets/placeholder-image.png";
 
+    // auto variant switch
     useEffect(() => {
       if (!hasVariants || hovered) return;
       intervalRef.current = setInterval(() => {
-        setActiveIndex((prev) => (prev + 1) % variants.length);
+        setFading(true);
+        setTimeout(() => {
+          setActiveIndex((prev) => (prev + 1) % variants.length);
+          setFading(false);
+        }, 200);
       }, 2000);
       return () => clearInterval(intervalRef.current);
     }, [variants, hovered, hasVariants]);
@@ -198,6 +201,7 @@ const Homepage = () => {
           <img
             src={currentImage}
             alt={product.name}
+            className={fading ? "fade" : ""}
             onError={(e) => (e.target.src = "/assets/placeholder-image.png")}
           />
           {hasVariants && (
@@ -207,7 +211,10 @@ const Homepage = () => {
 
         <p className="product-name">{product.name}</p>
         <p className="price">
-          ₱{variants[activeIndex]?.price?.toFixed(2) || product.price?.toFixed(2) || "N/A"}
+          ₱
+          {variants[activeIndex]?.price?.toFixed(2) ||
+            product.price?.toFixed(2) ||
+            "N/A"}
         </p>
 
         {hasVariants && (
@@ -286,16 +293,12 @@ const Homepage = () => {
     );
   };
 
-  // ------------------------------
-  // 🔄 Render Page
-  // ------------------------------
   if (loading) return <div className="loading">Loading products...</div>;
 
   return (
     <div className="app">
       <Navbar />
 
-      {/* Disclaimer */}
       {showDisclaimer && (
         <div className="disclaimer-overlay">
           <div className="disclaimer-box">
@@ -319,14 +322,20 @@ const Homepage = () => {
           banners.map((b, i) => (
             <div
               key={b._id}
-              className={`carousel-slide ${i === current ? "active" : ""} ${b.animationType}`}
+              className={`carousel-slide ${i === current ? "active" : ""} ${
+                b.animationType
+              }`}
               style={{ backgroundColor: b.backgroundColor || "#fff" }}
             >
               <picture>
                 {b.imageMobile && (
                   <source srcSet={b.imageMobile} media="(max-width:768px)" />
                 )}
-                <img src={b.imageDesktop} alt={b.title} className="carousel-image" />
+                <img
+                  src={b.imageDesktop}
+                  alt={b.title}
+                  className="carousel-image"
+                />
               </picture>
 
               <div className="carousel-content">
