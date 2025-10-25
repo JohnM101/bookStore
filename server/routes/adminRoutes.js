@@ -94,13 +94,14 @@ router.post("/products", protect, admin, upload.any(), async (req, res) => {
       };
     });
 
+    // ✅ In product creation
     const product = new Product({
       name: body.name,
       description: body.description,
       category: body.category,
       subcategory: body.subcategory,
       seriesTitle: body.seriesTitle,
-      volumeNumber: body.volumeNumber, // ✅ FIXED
+      volumeNumber: body.volumeNumber,
       publisher: body.publisher,
       slug: slugValue,
       author: body.author,
@@ -108,6 +109,7 @@ router.post("/products", protect, admin, upload.any(), async (req, res) => {
       publicationDate: body.publicationDate || null,
       age: body.age,
       variants,
+      status: body.status || "Active", // ✅ added
     });
 
     const saved = await product.save();
@@ -171,6 +173,7 @@ router.put("/products/:id", protect, admin, upload.any(), async (req, res) => {
       };
     });
 
+    // ✅ In product update
     const updated = await Product.findByIdAndUpdate(
       req.params.id,
       {
@@ -187,6 +190,7 @@ router.put("/products/:id", protect, admin, upload.any(), async (req, res) => {
         publicationDate: body.publicationDate || null,
         age: body.age,
         variants,
+        status: body.status || existing.status, // ✅ added
       },
       { new: true }
     );

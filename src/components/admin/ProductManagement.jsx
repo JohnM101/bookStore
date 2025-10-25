@@ -31,11 +31,9 @@ const ProductManagement = () => {
     publicationDate: "",
     age: "",
     variants: [],
+    status: "Active", // ✅ Added status field
   });
 
-  // ============================================================
-  // 🔹 Fetch Data
-  // ============================================================
   useEffect(() => {
     if (user?.token) {
       fetchProducts();
@@ -67,9 +65,6 @@ const ProductManagement = () => {
     }
   };
 
-  // ============================================================
-  // 🔹 Helpers
-  // ============================================================
   const generateSlug = (name, volumeNumber) => {
     const base = name
       ?.toLowerCase()
@@ -94,9 +89,6 @@ const ProductManagement = () => {
   const selectedCategory = categories.find((cat) => cat.slug === formData.category);
   const subcategories = selectedCategory?.subcategories || [];
 
-  // ============================================================
-  // 🔹 VARIANT HANDLERS
-  // ============================================================
   const addVariant = useCallback(() => {
     setFormData((prev) => ({
       ...prev,
@@ -167,9 +159,6 @@ const ProductManagement = () => {
     });
   };
 
-  // ============================================================
-  // 🔹 Submit — Create / Update Product
-  // ============================================================
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -179,12 +168,10 @@ const ProductManagement = () => {
       const method = isEditing ? "PUT" : "POST";
       const data = new FormData();
 
-      // Basic product fields
       Object.keys(formData).forEach((key) => {
         if (key !== "variants") data.append(key, formData[key]);
       });
 
-      // Variants with image handling
       formData.variants.forEach((v, idx) => {
         if (v.mainImage instanceof File) {
           data.append(`variantMainImages_${idx}`, v.mainImage);
@@ -196,7 +183,6 @@ const ProductManagement = () => {
         });
       });
 
-      // Serialize variants for backend
       const serializedVariants = formData.variants.map((v) => ({
         format: v.format,
         price: v.price,
@@ -225,9 +211,6 @@ const ProductManagement = () => {
     }
   };
 
-  // ============================================================
-  // 🔹 Edit / Delete / Reset
-  // ============================================================
   const handleEdit = (p) => {
     setCurrentProduct(p);
     setFormData({
@@ -253,9 +236,9 @@ const ProductManagement = () => {
           pages: v.pages,
           mainImage: null,
           mainPreview: v.mainImage || null,
-          albumImages:
-            v.albumImages?.map((url) => ({ preview: url })) || [],
+          albumImages: v.albumImages?.map((url) => ({ preview: url })) || [],
         })) || [],
+      status: p.status || "Active", // ✅ added
     });
     setIsEditing(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -293,14 +276,12 @@ const ProductManagement = () => {
       publicationDate: "",
       age: "",
       variants: [],
+      status: "Active", // ✅ added
     });
     setIsEditing(false);
     setCurrentProduct(null);
   };
 
-  // ============================================================
-  // 🔹 Render
-  // ============================================================
   if (loading) return <div className="loading">Loading products...</div>;
 
   return (
@@ -308,17 +289,14 @@ const ProductManagement = () => {
       <div className="product-form-container">
         <h2>{isEditing ? "Edit Product" : "Add New Product"}</h2>
         <form onSubmit={handleSubmit} className="product-form">
-          {/* Basic Inputs */}
-          {[
-            { name: "name", label: "Product Name", type: "text", required: true },
+          {[{ name: "name", label: "Product Name", type: "text", required: true },
             { name: "slug", label: "Slug (auto)", type: "text" },
             { name: "seriesTitle", label: "Series Title", type: "text" },
             { name: "volumeNumber", label: "Volume Number", type: "number" },
             { name: "publisher", label: "Publisher", type: "text" },
             { name: "author", label: "Author", type: "text" },
             { name: "publicationDate", label: "Publication Date", type: "date" },
-            { name: "age", label: "Age Range", type: "text" },
-          ].map((field) => (
+            { name: "age", label: "Age Range", type: "text" }].map((field) => (
             <div className="form-group floating-label" key={field.name}>
               <input
                 type={field.type}
@@ -333,7 +311,20 @@ const ProductManagement = () => {
             </div>
           ))}
 
-          {/* Description */}
+          {/* ✅ Product Status Selector */}
+          <div className="form-group">
+            <label>Status</label>
+            <select
+              name="status"
+              value={formData.status}
+              onChange={handleInputChange}
+            >
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+              <option value="Out of Stock">Out of Stock</option>
+            </select>
+          </div>
+
           <div className="form-group full-width">
             <label>Description</label>
             <textarea
@@ -344,7 +335,6 @@ const ProductManagement = () => {
             />
           </div>
 
-          {/* Variants */}
           <div className="form-group full-width">
             <label>Product Variants</label>
             <div className="variants-section">
@@ -357,7 +347,6 @@ const ProductManagement = () => {
                     <option value="Paperback">Paperback</option>
                     <option value="Hardcover">Hardcover</option>
                   </select>
-
                   <input
                     type="number"
                     placeholder="Price"
@@ -378,8 +367,6 @@ const ProductManagement = () => {
                     value={v.isbn}
                     onChange={(e) => updateVariant(idx, "isbn", e.target.value)}
                   />
-
-                  {/* Main Image */}
                   <label>Main Image</label>
                   <input
                     type="file"
@@ -392,15 +379,9 @@ const ProductManagement = () => {
                     <img
                       src={v.mainPreview}
                       alt="Main Preview"
-                      style={{
-                        width: "200px",
-                        borderRadius: "8px",
-                        marginTop: "8px",
-                      }}
+                      style={{ width: "200px", borderRadius: "8px", marginTop: "8px" }}
                     />
                   )}
-
-                  {/* Album Images */}
                   <label>Album Images</label>
                   <input
                     type="file"
@@ -413,11 +394,7 @@ const ProductManagement = () => {
                   <div className="album-preview">
                     {v.albumImages.map((img, i) => (
                       <div key={i} className="album-item">
-                        <img
-                          src={img.preview}
-                          alt="Album"
-                          className="album-thumb"
-                        />
+                        <img src={img.preview} alt="Album" className="album-thumb" />
                         <button
                           type="button"
                           className="remove-btn"
@@ -428,7 +405,6 @@ const ProductManagement = () => {
                       </div>
                     ))}
                   </div>
-
                   <button
                     type="button"
                     className="btn-delete"
@@ -444,7 +420,6 @@ const ProductManagement = () => {
             </div>
           </div>
 
-          {/* Form Buttons */}
           <div className="form-buttons">
             <button type="submit" className="btn-submit">
               {isEditing ? "Update Product" : "Add Product"}
@@ -458,7 +433,6 @@ const ProductManagement = () => {
         </form>
       </div>
 
-      {/* Product List */}
       <div className="products-list-container">
         <h2>Product List</h2>
         {products.length === 0 ? (
@@ -471,6 +445,7 @@ const ProductManagement = () => {
                 <th>Category</th>
                 <th>Variants</th>
                 <th>Stock</th>
+                <th>Status</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -490,6 +465,7 @@ const ProductManagement = () => {
                       0
                     )}
                   </td>
+                  <td>{p.status}</td>
                   <td className="actions">
                     <button className="btn-edit" onClick={() => handleEdit(p)}>
                       Edit

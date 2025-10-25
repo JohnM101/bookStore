@@ -29,8 +29,22 @@ const productSchema = new mongoose.Schema(
     publicationDate: Date,
     age: String,
     variants: [variantSchema],
+    status: {
+      type: String,
+      enum: ["Active", "Inactive", "Out of Stock"],
+      default: "Active",
+    },
   },
   { timestamps: true }
 );
+
+productSchema.pre("save", function (next) {
+  const totalStock = this.variants?.reduce(
+    (sum, v) => sum + (v.countInStock || 0),
+    0
+  );
+  if (totalStock === 0) this.status = "Out of Stock";
+  next();
+});
 
 module.exports = mongoose.model("Product", productSchema);
