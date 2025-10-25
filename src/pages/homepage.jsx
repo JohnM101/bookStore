@@ -1,5 +1,5 @@
 // ============================================================
-// ✅ Homepage.jsx — Modern Banner + Interactive Carousel Version
+// ✅ Homepage.jsx — Modern Banner + Interactive Carousel (Fixed Readability)
 // ============================================================
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -29,7 +29,7 @@ const Homepage = () => {
     "https://bookstore-0hqj.onrender.com";
 
   // ============================================================
-  // 🔹 Fetch CMS Banners (Now using modern fields)
+  // 🔹 Fetch CMS Banners
   // ============================================================
   useEffect(() => {
     const fetchBanners = async () => {
@@ -112,7 +112,7 @@ const Homepage = () => {
   }, [banners]);
 
   // ============================================================
-  // 🔹 Render Category Section
+  // 🔹 Render Product Section
   // ============================================================
   const renderProductSection = (slug, products) => {
     if (!products || products.length === 0) return null;
@@ -183,7 +183,7 @@ const Homepage = () => {
       )}
 
       {/* ============================================================ */}
-      {/* 🎨 Interactive Banner Carousel */}
+      {/* 🎨 Interactive Banner Carousel — Fixed Overlay Version */}
       {/* ============================================================ */}
       <div className="carousel-wrapper">
         {banners.length > 0 ? (
@@ -193,9 +193,9 @@ const Homepage = () => {
               className={`carousel-slide ${i === current ? "active" : ""} ${b.animationType}`}
               style={{
                 backgroundColor: b.backgroundColor || "#fff",
-                color: b.textColor || "#000",
               }}
             >
+              {/* Dark gradient overlay handled in CSS ::before */}
               <picture>
                 {b.imageMobile && (
                   <source srcSet={b.imageMobile} media="(max-width:768px)" />
