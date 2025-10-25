@@ -94,7 +94,6 @@ app.use("/api/static-pages", require("./routes/staticPageRoutes"));
 
 // 🛡️ Admin routes (protected)
 app.use("/api/admin", protect, admin, require("./routes/adminRoutes"));
-app.use("/api/admin/dashboard", protect, admin, require("./routes/adminDashboardRoutes"));
 
 // ============================================================
 // 🧠 HEALTH CHECK
