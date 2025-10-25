@@ -19,7 +19,11 @@ const Homepage = () => {
   const [productData, setProductData] = useState({});
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState([]);
-  const [featured, setFeatured] = useState({ promotions: [], newArrivals: [], popular: [] });
+  const [featured, setFeatured] = useState({
+    promotions: [],
+    newArrivals: [],
+    popular: [],
+  });
   const navigate = useNavigate();
 
   const API_URL =
@@ -56,7 +60,7 @@ const Homepage = () => {
     fetchCategories();
   }, [API_URL]);
 
-  // Fetch products (expanded entries)
+  // Fetch products (expanded variant entries)
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -149,7 +153,7 @@ const Homepage = () => {
                 onError={(e) => (e.target.src = "/assets/placeholder-image.png")}
               />
               <p className="product-name">{p.name}</p>
-              <p className="product-subtitle">{p.description?.substring(0, 40)}...</p>
+              {p.format && <p className="product-variation">{p.format}</p>}
               <p className="price">₱{p.price?.toFixed(2) || "N/A"}</p>
             </div>
           ))}
@@ -161,7 +165,7 @@ const Homepage = () => {
     );
   };
 
-  // render featured small helper
+  // Render featured section (same layout)
   const renderFeaturedBlock = (title, list, className) => {
     if (!list || list.length === 0) return null;
     return (
@@ -180,11 +184,15 @@ const Homepage = () => {
                 onError={(e) => (e.target.src = "/assets/placeholder-image.png")}
               />
               <p className="product-name">{p.name}</p>
+              {p.format && <p className="product-variation">{p.format}</p>}
               <p className="price">₱{p.price?.toFixed(2) || "N/A"}</p>
             </div>
           ))}
         </div>
-        <Link to={`/collections/${title.toLowerCase().replace(/\s+/g, "-")}`} className="view-all">
+        <Link
+          to={`/collections/${title.toLowerCase().replace(/\s+/g, "-")}`}
+          className="view-all"
+        >
           View All →
         </Link>
       </div>
@@ -204,7 +212,9 @@ const Homepage = () => {
             <img src="/assets/logo.png" alt="Logo" className="disclaimer-logo" />
             <h6 className="disclaimer-header">Welcome!</h6>
             <p className="disclaimer-text">
-              {user ? `Hello ${user.firstName} ${user.lastName}!` : "Welcome to our bookstore!"}
+              {user
+                ? `Hello ${user.firstName} ${user.lastName}!`
+                : "Welcome to our bookstore!"}
             </p>
             <button className="disclaimer-button" onClick={handleProceed}>
               Proceed
