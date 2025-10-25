@@ -1,4 +1,7 @@
-// App.js
+// ============================================================
+// ✅ App.js — Final Version with Variant-Aware Product Routes
+// ============================================================
+
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
@@ -7,7 +10,6 @@ import CreateAccount from './pages/createaccount';
 import ForgotPassword from './pages/forgotpassword';
 import Homepage from './pages/homepage';
 import Profile from './pages/profile';
-
 import ProductPage from './pages/ProductPage';
 import Address from './pages/address';
 import Wishlist from './pages/wishlist';
@@ -23,11 +25,10 @@ import AdminDashboard from './components/AdminDashboard';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import StaticPage from './pages/StaticPage';
-import MangaCategoryPage from './pages/MangaCategoryPage'; // ✅ Generic manga category
+import MangaCategoryPage from './pages/MangaCategoryPage';
 import './styles/Responsive.css';
 import './App.css';
 
-// Google Client ID
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 
 const AppLayout = () => {
@@ -44,16 +45,20 @@ const AppLayout = () => {
     <>
       {!hideNavbarFooter && <Navbar />}
       <Routes>
-        {/* === Public routes === */}
+        {/* === Public Routes === */}
         <Route path="/" element={<Homepage />} />
         <Route path="/create-account" element={<CreateAccount />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/login" element={<Login />} />
         <Route path="/about-faqs" element={<AboutFAQs />} />
 
-        {/* ✅ Product routes (only one route needed) */}
+        {/* ✅ Product routes with variant support */}
         <Route
           path="/product/:slug"
+          element={<ProductPage key={window.location.pathname} />}
+        />
+        <Route
+          path="/product/:slug/:variant"
           element={<ProductPage key={window.location.pathname} />}
         />
 
@@ -85,13 +90,10 @@ const AppLayout = () => {
           element={<MangaCategoryPage baseCategory="young-girls-manga" heading="YOUNG GIRLS MANGA" />}
         />
 
-        {/* ✅ Static Pages (About, Contact, Privacy Policy, FAQs, etc.) */}
-        <Route
-          path="/:slug"
-          element={<StaticPage />}
-        />
+        {/* ✅ Static Pages */}
+        <Route path="/:slug" element={<StaticPage />} />
 
-        {/* === Admin routes === */}
+        {/* === Admin Routes === */}
         <Route
           path="/admin/*"
           element={

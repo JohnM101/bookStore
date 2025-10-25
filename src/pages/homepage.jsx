@@ -1,4 +1,7 @@
-// src/pages/Homepage.jsx
+// ============================================================
+// ✅ Homepage.jsx — Updated to Use Variant-Aware Product URLs
+// ============================================================
+
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
@@ -37,7 +40,9 @@ const Homepage = () => {
       try {
         const res = await fetch(`${API_URL}/api/cms/banners?active=true`);
         const data = await res.json();
-        const active = data.filter((b) => b.isActive).sort((a, b) => a.order - b.order);
+        const active = data
+          .filter((b) => b.isActive)
+          .sort((a, b) => a.order - b.order);
         setBanners(active);
       } catch (err) {
         console.error("❌ Error fetching banners:", err);
@@ -139,18 +144,29 @@ const Homepage = () => {
           "--section-text-color": textColor,
         }}
       >
-        <h2 className="section-heading">{slug.replace(/-/g, " ").toUpperCase()}</h2>
+        <h2 className="section-heading">
+          {slug.replace(/-/g, " ").toUpperCase()}
+        </h2>
         <div className="product-list">
           {products.slice(0, 8).map((p) => (
             <div
               className="product-card"
               key={p._id}
-              onClick={() => navigate(`/product/${p.slug || p.parentId || p._id}`)}
+              // ✅ Variant-aware navigation
+              onClick={() =>
+                navigate(
+                  `/product/${p.slug || p.parentId || p._id}/${
+                    p.format?.toLowerCase() || "paperback"
+                  }`
+                )
+              }
             >
               <img
                 src={p.mainImage || "/assets/placeholder-image.png"}
                 alt={p.name}
-                onError={(e) => (e.target.src = "/assets/placeholder-image.png")}
+                onError={(e) =>
+                  (e.target.src = "/assets/placeholder-image.png")
+                }
               />
               <p className="product-name">{p.name}</p>
               {p.format && <p className="product-variation">{p.format}</p>}
@@ -165,7 +181,7 @@ const Homepage = () => {
     );
   };
 
-  // Render featured section (same layout)
+  // Render featured section
   const renderFeaturedBlock = (title, list, className) => {
     if (!list || list.length === 0) return null;
     return (
@@ -176,12 +192,21 @@ const Homepage = () => {
             <div
               key={p._id}
               className="product-card"
-              onClick={() => navigate(`/product/${p.slug || p.parentId || p._id}`)}
+              // ✅ Variant-aware link for featured items too
+              onClick={() =>
+                navigate(
+                  `/product/${p.slug || p.parentId || p._id}/${
+                    p.format?.toLowerCase() || "paperback"
+                  }`
+                )
+              }
             >
               <img
                 src={p.mainImage || "/assets/placeholder-image.png"}
                 alt={p.name}
-                onError={(e) => (e.target.src = "/assets/placeholder-image.png")}
+                onError={(e) =>
+                  (e.target.src = "/assets/placeholder-image.png")
+                }
               />
               <p className="product-name">{p.name}</p>
               {p.format && <p className="product-variation">{p.format}</p>}
@@ -209,7 +234,11 @@ const Homepage = () => {
       {showDisclaimer && (
         <div className="disclaimer-overlay">
           <div className="disclaimer-box">
-            <img src="/assets/logo.png" alt="Logo" className="disclaimer-logo" />
+            <img
+              src="/assets/logo.png"
+              alt="Logo"
+              className="disclaimer-logo"
+            />
             <h6 className="disclaimer-header">Welcome!</h6>
             <p className="disclaimer-text">
               {user
@@ -229,19 +258,32 @@ const Homepage = () => {
           banners.map((b, i) => (
             <div
               key={b._id}
-              className={`carousel-slide ${i === current ? "active" : ""} ${b.animationType}`}
+              className={`carousel-slide ${
+                i === current ? "active" : ""
+              } ${b.animationType}`}
               style={{ backgroundColor: b.backgroundColor || "#fff" }}
             >
               <picture>
-                {b.imageMobile && <source srcSet={b.imageMobile} media="(max-width:768px)" />}
-                <img src={b.imageDesktop} alt={b.title} className="carousel-image" />
+                {b.imageMobile && (
+                  <source srcSet={b.imageMobile} media="(max-width:768px)" />
+                )}
+                <img
+                  src={b.imageDesktop}
+                  alt={b.title}
+                  className="carousel-image"
+                />
               </picture>
 
               <div className="carousel-content">
                 <h2 className="carousel-title">{b.title}</h2>
-                {b.subtitle && <p className="carousel-subtitle">{b.subtitle}</p>}
+                {b.subtitle && (
+                  <p className="carousel-subtitle">{b.subtitle}</p>
+                )}
                 {b.ctaText && (
-                  <button className="carousel-btn" onClick={() => navigate(b.ctaLink || "/")}>
+                  <button
+                    className="carousel-btn"
+                    onClick={() => navigate(b.ctaLink || "/")}
+                  >
                     {b.ctaText}
                   </button>
                 )}
@@ -249,19 +291,25 @@ const Homepage = () => {
             </div>
           ))
         ) : (
-          <img src="/assets/default-banner.png" alt="Default Banner" className="banner-image" />
+          <img
+            src="/assets/default-banner.png"
+            alt="Default Banner"
+            className="banner-image"
+          />
         )}
       </div>
 
       {/* Featured Sections */}
       <div className="featured-wrapper">
-        {renderFeaturedBlock("🔥 Promotions", featured.promotions, "featured promotions")}
-        {renderFeaturedBlock("🆕 New Arrivals", featured.newArrivals, "featured new-arrivals")}
-        {renderFeaturedBlock("⭐ Popular Products", featured.popular, "featured popular")}
+        {renderFeaturedBlock("Promotions", featured.promotions, "featured promotions")}
+        {renderFeaturedBlock("New Arrivals", featured.newArrivals, "featured new-arrivals")}
+        {renderFeaturedBlock("Popular Products", featured.popular, "featured popular")}
       </div>
 
       {/* Category-based Product Sections */}
-      {Object.entries(productData).map(([slug, products]) => renderProductSection(slug, products))}
+      {Object.entries(productData).map(([slug, products]) =>
+        renderProductSection(slug, products)
+      )}
     </div>
   );
 };

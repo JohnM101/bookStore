@@ -1,8 +1,9 @@
 // ============================================================
-// ✅ ProductPage.jsx — Final Version (With Product Status Support)
+// ✅ ProductPage.jsx — Final Version with Variant URLs
 // ============================================================
+
 import React, { useState, useEffect, useRef } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./ProductPage.css";
 
@@ -10,7 +11,9 @@ const API_URL =
   process.env.NEXT_PUBLIC_API_URL || "https://bookstore-0hqj.onrender.com";
 
 const ProductPage = () => {
-  const { slug } = useParams();
+  const { slug, variant } = useParams();
+  const navigate = useNavigate();
+
   const [product, setProduct] = useState(null);
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [mainImage, setMainImage] = useState(null);
@@ -22,7 +25,7 @@ const ProductPage = () => {
   const descriptionTabRef = useRef(null);
 
   // ============================================================
-  // 🔹 Fetch product details
+  // 🔹 Fetch product details (handles variant URL param)
   // ============================================================
   useEffect(() => {
     const fetchProduct = async () => {
@@ -31,7 +34,6 @@ const ProductPage = () => {
         const res = await axios.get(`${API_URL}/api/products/${slug}`);
         const data = res.data;
 
-        // ✅ Block inactive products (security)
         if (data.status === "Inactive") {
           setError("This product is currently unavailable.");
           setLoading(false);
@@ -40,14 +42,28 @@ const ProductPage = () => {
 
         setProduct(data);
 
+        // ✅ Select variant from URL or fallback
         if (data.variants && data.variants.length > 0) {
-          const v = data.variants[0];
-          setSelectedVariant(v);
-          const baseMain = v.mainImage || "/assets/placeholder-image.png";
-          const album = v.albumImages?.length ? v.albumImages : [];
+          const matched =
+            data.variants.find(
+              (v) => v.format?.toLowerCase() === variant?.toLowerCase()
+            ) || data.variants[0];
+
+          setSelectedVariant(matched);
+
+          const baseMain = matched.mainImage || "/assets/placeholder-image.png";
+          const album = matched.albumImages?.length ? matched.albumImages : [];
           const uniqueAlbum = [baseMain, ...album.filter((img) => img !== baseMain)];
+
           setMainImage(baseMain);
           setAlbumImages(uniqueAlbum);
+
+          // ✅ If URL missing variant, redirect to first variant
+          if (!variant) {
+            navigate(`/product/${slug}/${matched.format.toLowerCase()}`, {
+              replace: true,
+            });
+          }
         } else {
           const baseMain = data.image || "/assets/placeholder-image.png";
           const album = data.albumImages?.length ? data.albumImages : [];
@@ -64,28 +80,24 @@ const ProductPage = () => {
     };
 
     fetchProduct();
-  }, [slug]);
+  }, [slug, variant, navigate]);
 
   // ============================================================
-  const handleVariantClick = (variant) => {
-    setSelectedVariant(variant);
-    const baseMain = variant.mainImage || "/assets/placeholder-image.png";
-    const album = variant.albumImages?.length ? variant.albumImages : [];
+  // 🔹 Handlers
+  // ============================================================
+  const handleVariantClick = (v) => {
+    setSelectedVariant(v);
+    const baseMain = v.mainImage || "/assets/placeholder-image.png";
+    const album = v.albumImages?.length ? v.albumImages : [];
     const uniqueAlbum = [baseMain, ...album.filter((img) => img !== baseMain)];
     setMainImage(baseMain);
     setAlbumImages(uniqueAlbum);
+
+    // ✅ Update URL dynamically without reload
+    navigate(`/product/${slug}/${v.format?.toLowerCase()}`);
   };
 
   const handleAlbumClick = (img) => setMainImage(img);
-
-  const formatDate = (dateStr) =>
-    dateStr
-      ? new Date(dateStr).toLocaleDateString("en-US", {
-          day: "numeric",
-          month: "long",
-          year: "numeric",
-        })
-      : "N/A";
 
   const handleReadMoreClick = () => {
     setShowFullDescription(true);
@@ -98,12 +110,22 @@ const ProductPage = () => {
     }, 300);
   };
 
+  const formatDate = (dateStr) =>
+    dateStr
+      ? new Date(dateStr).toLocaleDateString("en-US", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        })
+      : "N/A";
+
+  // ============================================================
+  // 🔹 UI Logic
   // ============================================================
   if (loading) return <div className="loading">Loading product...</div>;
   if (error) return <div className="error-message">{error}</div>;
   if (!product) return <div className="error">Product not found.</div>;
 
-  // Determine stock-based status dynamically for safety
   const totalStock = product.variants?.reduce(
     (sum, v) => sum + (v.countInStock || 0),
     0
@@ -111,6 +133,8 @@ const ProductPage = () => {
   const computedStatus =
     totalStock === 0 ? "Out of Stock" : product.status || "Active";
 
+  // ============================================================
+  // 🔹 Render Component
   // ============================================================
   return (
     <div className="product-page">
@@ -172,7 +196,7 @@ const ProductPage = () => {
             Status: {computedStatus}
           </p>
 
-          {/* Variants */}
+          {/* 🔸 Variant Buttons */}
           {product.variants?.length > 0 && (
             <div className="variant-options">
               {product.variants.map((v) => (
@@ -189,7 +213,7 @@ const ProductPage = () => {
             </div>
           )}
 
-          {/* Price & Stock */}
+          {/* 🔸 Variant Info */}
           {selectedVariant && (
             <div className="variant-meta">
               <p className="price">
@@ -206,7 +230,7 @@ const ProductPage = () => {
             Publication Date: {formatDate(product.publicationDate)}
           </p>
 
-          {/* Description */}
+          {/* 🔸 Description */}
           <div className="description-preview">
             <p>
               {showFullDescription
