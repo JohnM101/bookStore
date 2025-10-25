@@ -1,8 +1,8 @@
 // ============================================================
-// ✅ Homepage.jsx — Updated to Use Variant-Aware Product URLs
+// ✅ Homepage.jsx — Unified Variant Product Cards with Auto Switch
 // ============================================================
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import "./homepage.css";
@@ -19,9 +19,8 @@ const Homepage = () => {
   const [banners, setBanners] = useState([]);
   const [current, setCurrent] = useState(0);
   const [showDisclaimer, setShowDisclaimer] = useState(false);
-  const [productData, setProductData] = useState({});
+  const [mergedProducts, setMergedProducts] = useState({});
   const [loading, setLoading] = useState(true);
-  const [categories, setCategories] = useState([]);
   const [featured, setFeatured] = useState({
     promotions: [],
     newArrivals: [],
@@ -34,7 +33,9 @@ const Homepage = () => {
     process.env.NEXT_PUBLIC_API_URL ||
     "https://bookstore-0hqj.onrender.com";
 
-  // Fetch CMS banners
+  // ============================
+  // 🔹 Fetch CMS Banners
+  // ============================
   useEffect(() => {
     const fetchBanners = async () => {
       try {
@@ -51,34 +52,42 @@ const Homepage = () => {
     fetchBanners();
   }, [API_URL]);
 
-  // Fetch categories
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const res = await fetch(`${API_URL}/api/categories`);
-        const data = await res.json();
-        setCategories(data);
-      } catch (err) {
-        console.error("❌ Error fetching categories:", err);
-      }
-    };
-    fetchCategories();
-  }, [API_URL]);
-
-  // Fetch products (expanded variant entries)
+  // ============================
+  // 🔹 Fetch & Merge Products by Slug
+  // ============================
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         const res = await fetch(`${API_URL}/api/products`);
         if (!res.ok) throw new Error("Failed to fetch products");
         const allProducts = await res.json();
-        const grouped = allProducts.reduce((acc, product) => {
-          const catSlug = normalizeSlug(product.category);
-          if (!acc[catSlug]) acc[catSlug] = [];
-          acc[catSlug].push(product);
+
+        // Group by slug and merge variants
+        const grouped = allProducts.reduce((acc, p) => {
+          const key = p.slug || p._id;
+          const catSlug = normalizeSlug(p.category);
+          if (!acc[catSlug]) acc[catSlug] = {};
+          if (!acc[catSlug][key]) {
+            acc[catSlug][key] = {
+              ...p,
+              variants: [],
+            };
+          }
+          acc[catSlug][key].variants.push({
+            format: p.format,
+            price: p.price,
+            mainImage: p.mainImage,
+          });
           return acc;
         }, {});
-        setProductData(grouped);
+
+        // Convert nested objects to arrays
+        const final = {};
+        Object.entries(grouped).forEach(([cat, items]) => {
+          final[cat] = Object.values(items);
+        });
+
+        setMergedProducts(final);
       } catch (err) {
         console.error("❌ Error fetching products:", err);
       } finally {
@@ -88,7 +97,9 @@ const Homepage = () => {
     fetchProducts();
   }, [API_URL]);
 
-  // Fetch featured
+  // ============================
+  // 🔹 Fetch Featured Products
+  // ============================
   useEffect(() => {
     const fetchFeatured = async () => {
       try {
@@ -102,13 +113,14 @@ const Homepage = () => {
         });
       } catch (err) {
         console.error("❌ Error fetching featured:", err);
-        setFeatured({ promotions: [], newArrivals: [], popular: [] });
       }
     };
     fetchFeatured();
   }, [API_URL]);
 
-  // Disclaimer modal
+  // ============================
+  // 🔹 Disclaimer Modal
+  // ============================
   useEffect(() => {
     if (!localStorage.getItem("hasSeenDisclaimer")) setShowDisclaimer(true);
   }, []);
@@ -118,9 +130,9 @@ const Homepage = () => {
     setShowDisclaimer(false);
   };
 
-  const user = JSON.parse(localStorage.getItem("user"));
-
-  // Carousel auto-slide
+  // ============================
+  // 🔹 Carousel Auto Slide
+  // ============================
   useEffect(() => {
     if (banners.length === 0) return;
     const interval = setInterval(() => {
@@ -129,7 +141,84 @@ const Homepage = () => {
     return () => clearInterval(interval);
   }, [banners]);
 
-  // Render product section for categories
+  // ============================================================
+  // 🔸 Variant Switching Product Card
+  // ============================================================
+  const ProductCard = ({ product, bgColor }) => {
+    const [index, setIndex] = useState(0);
+    const [hovered, setHovered] = useState(false);
+    const intervalRef = useRef(null);
+
+    const variants = product.variants || [];
+    const currentVariant = variants[index] || {};
+    const navigate = useNavigate();
+
+    // Auto-switch images when not hovered
+    useEffect(() => {
+      if (hovered || variants.length <= 1) return;
+      intervalRef.current = setInterval(() => {
+        setIndex((prev) => (prev + 1) % variants.length);
+      }, 2000);
+      return () => clearInterval(intervalRef.current);
+    }, [hovered, variants.length]);
+
+    const handleVariantHover = (i) => {
+      clearInterval(intervalRef.current);
+      setHovered(true);
+      setIndex(i);
+    };
+
+    const handleMouseLeave = () => {
+      setHovered(false);
+    };
+
+    const handleCardClick = () => {
+      const variantSlug = currentVariant.format?.toLowerCase() || "standard";
+      navigate(`/product/${product.slug}/${variantSlug}`);
+    };
+
+    return (
+      <div
+        className="product-card"
+        onMouseLeave={handleMouseLeave}
+        style={{ "--section-color": bgColor }}
+      >
+        <div className="product-image-wrap" onClick={handleCardClick}>
+          <img
+            src={currentVariant.mainImage || "/assets/placeholder-image.png"}
+            alt={product.name}
+          />
+          {variants.length > 1 && (
+            <div className="variant-count">{variants.length} VARIANTS</div>
+          )}
+        </div>
+
+        <p className="product-name">{product.name}</p>
+
+        {variants.length > 1 && (
+          <div className="variant-buttons">
+            {variants.map((v, i) => (
+              <button
+                key={i}
+                className={`variant-btn ${i === index ? "active" : ""}`}
+                onMouseEnter={() => handleVariantHover(i)}
+                onClick={() => handleVariantHover(i)}
+              >
+                {v.format} — ₱{v.price?.toLocaleString() || "N/A"}
+              </button>
+            ))}
+          </div>
+        )}
+        {variants.length === 1 && (
+          <p className="price">₱{variants[0]?.price?.toFixed(2) || "N/A"}</p>
+        )}
+      </div>
+    );
+  };
+
+  // ============================================================
+  // 🔸 Category Product Section Renderer
+  // ============================================================
   const renderProductSection = (slug, products) => {
     if (!products || products.length === 0) return null;
     const bgColor = CATEGORY_COLORS[slug]?.bg || "#ccc";
@@ -149,29 +238,7 @@ const Homepage = () => {
         </h2>
         <div className="product-list">
           {products.slice(0, 8).map((p) => (
-            <div
-              className="product-card"
-              key={p._id}
-              // ✅ Variant-aware navigation
-              onClick={() =>
-                navigate(
-                  `/product/${p.slug || p.parentId || p._id}/${
-                    p.format?.toLowerCase() || "paperback"
-                  }`
-                )
-              }
-            >
-              <img
-                src={p.mainImage || "/assets/placeholder-image.png"}
-                alt={p.name}
-                onError={(e) =>
-                  (e.target.src = "/assets/placeholder-image.png")
-                }
-              />
-              <p className="product-name">{p.name}</p>
-              {p.format && <p className="product-variation">{p.format}</p>}
-              <p className="price">₱{p.price?.toFixed(2) || "N/A"}</p>
-            </div>
+            <ProductCard key={p._id} product={p} bgColor={bgColor} />
           ))}
         </div>
         <Link to={`/${slug}`} className="view-all">
@@ -181,7 +248,9 @@ const Homepage = () => {
     );
   };
 
-  // Render featured section
+  // ============================================================
+  // 🔸 Featured Block Renderer
+  // ============================================================
   const renderFeaturedBlock = (title, list, className) => {
     if (!list || list.length === 0) return null;
     return (
@@ -189,41 +258,29 @@ const Homepage = () => {
         <h2 className="section-heading">{title}</h2>
         <div className="product-list">
           {list.slice(0, 8).map((p) => (
-            <div
+            <ProductCard
               key={p._id}
-              className="product-card"
-              // ✅ Variant-aware link for featured items too
-              onClick={() =>
-                navigate(
-                  `/product/${p.slug || p.parentId || p._id}/${
-                    p.format?.toLowerCase() || "paperback"
-                  }`
-                )
-              }
-            >
-              <img
-                src={p.mainImage || "/assets/placeholder-image.png"}
-                alt={p.name}
-                onError={(e) =>
-                  (e.target.src = "/assets/placeholder-image.png")
-                }
-              />
-              <p className="product-name">{p.name}</p>
-              {p.format && <p className="product-variation">{p.format}</p>}
-              <p className="price">₱{p.price?.toFixed(2) || "N/A"}</p>
-            </div>
+              product={{
+                ...p,
+                variants: [
+                  {
+                    format: p.format,
+                    price: p.price,
+                    mainImage: p.mainImage,
+                  },
+                ],
+              }}
+              bgColor="#000"
+            />
           ))}
         </div>
-        <Link
-          to={`/collections/${title.toLowerCase().replace(/\s+/g, "-")}`}
-          className="view-all"
-        >
-          View All →
-        </Link>
       </div>
     );
   };
 
+  // ============================================================
+  // 🔸 Final Render
+  // ============================================================
   if (loading) return <div className="loading">Loading products...</div>;
 
   return (
@@ -234,17 +291,9 @@ const Homepage = () => {
       {showDisclaimer && (
         <div className="disclaimer-overlay">
           <div className="disclaimer-box">
-            <img
-              src="/assets/logo.png"
-              alt="Logo"
-              className="disclaimer-logo"
-            />
+            <img src="/assets/logo.png" alt="Logo" className="disclaimer-logo" />
             <h6 className="disclaimer-header">Welcome!</h6>
-            <p className="disclaimer-text">
-              {user
-                ? `Hello ${user.firstName} ${user.lastName}!`
-                : "Welcome to our bookstore!"}
-            </p>
+            <p className="disclaimer-text">Welcome to our bookstore!</p>
             <button className="disclaimer-button" onClick={handleProceed}>
               Proceed
             </button>
@@ -258,9 +307,7 @@ const Homepage = () => {
           banners.map((b, i) => (
             <div
               key={b._id}
-              className={`carousel-slide ${
-                i === current ? "active" : ""
-              } ${b.animationType}`}
+              className={`carousel-slide ${i === current ? "active" : ""}`}
               style={{ backgroundColor: b.backgroundColor || "#fff" }}
             >
               <picture>
@@ -273,12 +320,8 @@ const Homepage = () => {
                   className="carousel-image"
                 />
               </picture>
-
               <div className="carousel-content">
                 <h2 className="carousel-title">{b.title}</h2>
-                {b.subtitle && (
-                  <p className="carousel-subtitle">{b.subtitle}</p>
-                )}
                 {b.ctaText && (
                   <button
                     className="carousel-btn"
@@ -307,7 +350,7 @@ const Homepage = () => {
       </div>
 
       {/* Category-based Product Sections */}
-      {Object.entries(productData).map(([slug, products]) =>
+      {Object.entries(mergedProducts).map(([slug, products]) =>
         renderProductSection(slug, products)
       )}
     </div>

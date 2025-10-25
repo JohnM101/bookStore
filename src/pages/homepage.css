@@ -376,3 +376,76 @@ body {
   margin-top: -4px;
   margin-bottom: 6px;
 }
+/* ============================================================
+   🧩 VARIANT BUTTONS INSIDE PRODUCT CARD
+   ============================================================ */
+
+.variant-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.variant-btn {
+  flex: 1 1 auto;
+  background-color: #f3f4f6; /* light gray */
+  color: #333;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  white-space: nowrap;
+}
+
+.variant-btn:hover {
+  background-color: var(--section-color, #2563eb);
+  color: #fff;
+  transform: translateY(-2px);
+}
+
+.variant-btn.active {
+  background-color: var(--section-color, #2563eb);
+  color: #fff;
+  border-color: var(--section-color, #2563eb);
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.15);
+}
+
+.variant-btn:active {
+  transform: scale(0.97);
+}
+
+/* ============================================================
+   ✨ ANIMATION — VARIANT IMAGE SWITCH FEEL
+   ============================================================ */
+.product-image-wrap img {
+  transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out;
+}
+.product-card:hover .product-image-wrap img {
+  transform: scale(1.02);
+}
+
+/* ============================================================
+   📱 RESPONSIVE VARIANT BUTTONS
+   ============================================================ */
+@media (max-width: 768px) {
+  .variant-buttons {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .variant-btn {
+    font-size: 0.8rem;
+    padding: 5px 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .variant-btn {
+    font-size: 0.75rem;
+    padding: 4px 6px;
+  }
+}
