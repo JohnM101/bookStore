@@ -26,12 +26,18 @@ router.get('/', async (req, res) => {
 // 🔒 Admin: Create category
 router.post('/', protect, admin, async (req, res) => {
   try {
-    const { name, slug, subcategories = [] } = req.body;
+    const { name, slug, color, textColor, subcategories = [] } = req.body;
 
     // ✅ Always sort before saving
     const sortedSubs = subcategories.sort((a, b) => a.name.localeCompare(b.name));
 
-    const category = new Category({ name, slug, subcategories: sortedSubs });
+    const category = new Category({
+      name,
+      slug,
+      color,
+      textColor,
+      subcategories: sortedSubs,
+    });
     const saved = await category.save();
     res.status(201).json(saved);
   } catch (error) {

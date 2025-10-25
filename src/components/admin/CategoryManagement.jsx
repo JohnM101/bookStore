@@ -1,4 +1,3 @@
-// src/components/admin/CategoryManagement.jsx
 import React, { useEffect, useState } from 'react';
 import { useUser } from '../../contexts/UserContext';
 import '../AdminDashboard.css';
@@ -9,7 +8,13 @@ const CategoryManagement = () => {
   const { user } = useUser();
 
   const [categories, setCategories] = useState([]);
-  const [form, setForm] = useState({ name: '', slug: '', subcategories: [] });
+  const [form, setForm] = useState({
+    name: '',
+    slug: '',
+    color: '#ffffff',
+    textColor: '#111111',
+    subcategories: [],
+  });
   const [subName, setSubName] = useState('');
   const [editingCategory, setEditingCategory] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -19,15 +24,12 @@ const CategoryManagement = () => {
     try {
       const res = await fetch(`${API_URL}/api/categories`);
       let data = await res.json();
-
-      // ✅ Ensure subcategories are always sorted alphabetically
       data = data.map((cat) => ({
         ...cat,
         subcategories: (cat.subcategories || []).sort((a, b) =>
           a.name.localeCompare(b.name)
         ),
       }));
-
       setCategories(data);
     } catch (err) {
       console.error('❌ Failed to fetch categories:', err);
@@ -40,27 +42,18 @@ const CategoryManagement = () => {
     fetchCategories();
   }, []);
 
-  // === GENERATE SLUG ===
   const generateSlug = (str) =>
     str.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').trim();
 
-  // === HANDLE SUBCATEGORY ADD/REMOVE ===
+  // === SUBCATEGORY MANAGEMENT ===
   const handleAddSub = () => {
     if (!subName.trim()) return;
     const newSub = { name: subName.trim(), slug: generateSlug(subName.trim()) };
-
-    // prevent duplicate subs
     if (form.subcategories.some((s) => s.slug === newSub.slug)) return;
-
-    // ✅ Keep subcategories sorted by name after adding
     const updatedSubs = [...form.subcategories, newSub].sort((a, b) =>
       a.name.localeCompare(b.name)
     );
-
-    setForm({
-      ...form,
-      subcategories: updatedSubs,
-    });
+    setForm({ ...form, subcategories: updatedSubs });
     setSubName('');
   };
 
@@ -68,22 +61,18 @@ const CategoryManagement = () => {
     const updatedSubs = form.subcategories
       .filter((s) => s.slug !== slug)
       .sort((a, b) => a.name.localeCompare(b.name));
-
-    setForm({
-      ...form,
-      subcategories: updatedSubs,
-    });
+    setForm({ ...form, subcategories: updatedSubs });
   };
 
-  // === SUBMIT FORM (ADD / UPDATE) ===
+  // === SUBMIT FORM ===
   const handleSubmit = async (e) => {
     e.preventDefault();
     const slug = generateSlug(form.name);
 
-    // ✅ Always ensure subcategories are sorted before sending to backend
     const sortedSubcategories = [...form.subcategories].sort((a, b) =>
       a.name.localeCompare(b.name)
     );
+
     const payload = { ...form, slug, subcategories: sortedSubcategories };
 
     try {
@@ -104,7 +93,13 @@ const CategoryManagement = () => {
 
       if (!res.ok) throw new Error('Failed to save category');
 
-      setForm({ name: '', slug: '', subcategories: [] });
+      setForm({
+        name: '',
+        slug: '',
+        color: '#ffffff',
+        textColor: '#111111',
+        subcategories: [],
+      });
       setEditingCategory(null);
       fetchCategories();
     } catch (err) {
@@ -112,23 +107,21 @@ const CategoryManagement = () => {
     }
   };
 
-  // === EDIT CATEGORY ===
   const handleEdit = (category) => {
     setEditingCategory(category);
     setForm({
       name: category.name,
       slug: category.slug,
-      // ✅ Sort subcategories when editing
+      color: category.color || '#ffffff',
+      textColor: category.textColor || '#111111',
       subcategories: (category.subcategories || []).sort((a, b) =>
         a.name.localeCompare(b.name)
       ),
     });
   };
 
-  // === DELETE CATEGORY ===
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this category?')) return;
-
     try {
       await fetch(`${API_URL}/api/categories/${id}`, {
         method: 'DELETE',
@@ -140,10 +133,15 @@ const CategoryManagement = () => {
     }
   };
 
-  // === CANCEL EDIT ===
   const handleCancel = () => {
     setEditingCategory(null);
-    setForm({ name: '', slug: '', subcategories: [] });
+    setForm({
+      name: '',
+      slug: '',
+      color: '#ffffff',
+      textColor: '#111111',
+      subcategories: [],
+    });
     setSubName('');
   };
 
@@ -170,6 +168,23 @@ const CategoryManagement = () => {
                 })
               }
               required
+            />
+          </div>
+
+          {/* 🎨 Category Colors */}
+          <div className="form-group colors">
+            <label>Background Color</label>
+            <input
+              type="color"
+              value={form.color}
+              onChange={(e) => setForm({ ...form, color: e.target.value })}
+            />
+
+            <label>Text Color</label>
+            <input
+              type="color"
+              value={form.textColor}
+              onChange={(e) => setForm({ ...form, textColor: e.target.value })}
             />
           </div>
 
@@ -229,6 +244,7 @@ const CategoryManagement = () => {
             <thead>
               <tr>
                 <th>Category Name</th>
+                <th>Colors</th>
                 <th>Subcategories</th>
                 <th>Actions</th>
               </tr>
@@ -237,12 +253,23 @@ const CategoryManagement = () => {
               {categories.map((c) => (
                 <tr key={c._id}>
                   <td>{c.name}</td>
-
-                  {/* ✅ Numbered vertical list of subcategories */}
+                  <td>
+                    <div
+                      style={{
+                        background: c.color,
+                        color: c.textColor,
+                        padding: '4px 8px',
+                        borderRadius: '6px',
+                        border: '1px solid #ddd',
+                      }}
+                    >
+                      Bg: {c.color}, Text: {c.textColor}
+                    </div>
+                  </td>
                   <td>
                     {c.subcategories?.length > 0 ? (
                       <ol className="subcategory-numbered-list">
-                        {c.subcategories.map((s, index) => (
+                        {c.subcategories.map((s) => (
                           <li key={s.slug}>{s.name}</li>
                         ))}
                       </ol>
@@ -250,7 +277,6 @@ const CategoryManagement = () => {
                       '—'
                     )}
                   </td>
-
                   <td className="actions">
                     <button className="btn-edit" onClick={() => handleEdit(c)}>
                       Edit

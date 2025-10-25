@@ -1,17 +1,11 @@
 // ============================================================
-// ✅ Homepage.jsx — Unified Variant-Aware Cards (No extra files)
+// ✅ Homepage.jsx — Dynamic Category Colors (from backend)
 // ============================================================
 
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import "./homepage.css";
-
-const CATEGORY_COLORS = {
-  "kids-manga": { bg: "#f87171", text: "#fff" },
-  "young-boys-manga": { bg: "#60a5fa", text: "#fff" },
-  "young-girls-manga": { bg: "#34d399", text: "#fff" },
-};
 
 const normalizeSlug = (str) => str?.toLowerCase().replace(/\s+/g, "-").trim();
 
@@ -51,7 +45,7 @@ const Homepage = () => {
     fetchBanners();
   }, [API_URL]);
 
-  // Fetch categories
+  // Fetch categories (with color info)
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -72,12 +66,14 @@ const Homepage = () => {
         const res = await fetch(`${API_URL}/api/products`);
         if (!res.ok) throw new Error("Failed to fetch products");
         const allProducts = await res.json();
+
         const grouped = allProducts.reduce((acc, product) => {
           const catSlug = normalizeSlug(product.category);
           if (!acc[catSlug]) acc[catSlug] = [];
           acc[catSlug].push(product);
           return acc;
         }, {});
+
         setProductData(grouped);
       } catch (err) {
         console.error("❌ Error fetching products:", err);
@@ -88,7 +84,7 @@ const Homepage = () => {
     fetchProducts();
   }, [API_URL]);
 
-  // Fetch featured
+  // Fetch featured products
   useEffect(() => {
     const fetchFeatured = async () => {
       try {
@@ -128,14 +124,12 @@ const Homepage = () => {
     return () => clearInterval(interval);
   }, [banners]);
 
-  // Group variants by parent
+  // Helper: group variants
   const groupProductsByParent = (products) => {
     const grouped = {};
     for (const p of products) {
       const key = p.parentId || p._id;
-      if (!grouped[key]) {
-        grouped[key] = { ...p, variants: [] };
-      }
+      if (!grouped[key]) grouped[key] = { ...p, variants: [] };
       grouped[key].variants.push({
         _id: p._id,
         format: p.format,
@@ -146,9 +140,18 @@ const Homepage = () => {
     return Object.values(grouped);
   };
 
-  // ------------------------------
-  // 🧱 Variant-Aware Product Card
-  // ------------------------------
+  // Get category colors dynamically from backend
+  const getCategoryColors = (slug) => {
+    const found = categories.find(
+      (cat) => normalizeSlug(cat.name) === normalizeSlug(slug)
+    );
+    return {
+      bg: found?.color || "#f4f4f4",
+      text: found?.textColor || "#111111",
+    };
+  };
+
+  // Product Card
   const VariantCard = ({ product }) => {
     const [activeIndex, setActiveIndex] = useState(0);
     const [hovered, setHovered] = useState(false);
@@ -162,7 +165,6 @@ const Homepage = () => {
       product.mainImage ||
       "/assets/placeholder-image.png";
 
-    // auto variant switch
     useEffect(() => {
       if (!hasVariants || hovered) return;
       intervalRef.current = setInterval(() => {
@@ -208,7 +210,6 @@ const Homepage = () => {
             <span className="variant-count">{variants.length} Variants</span>
           )}
         </div>
-
         <p className="product-name">{product.name}</p>
         <p className="price">
           ₱
@@ -235,13 +236,10 @@ const Homepage = () => {
     );
   };
 
-  // ------------------------------
-  // 🧩 Render Category Section
-  // ------------------------------
+  // Render Category Section
   const renderProductSection = (slug, products) => {
     if (!products || products.length === 0) return null;
-    const bgColor = CATEGORY_COLORS[slug]?.bg || "#ccc";
-    const textColor = CATEGORY_COLORS[slug]?.text || "#fff";
+    const { bg, text } = getCategoryColors(slug);
     const grouped = groupProductsByParent(products);
 
     return (
@@ -249,11 +247,17 @@ const Homepage = () => {
         key={slug}
         className="product-section"
         style={{
-          "--section-color": bgColor,
-          "--section-text-color": textColor,
+          "--section-color": bg,
+          "--section-text-color": text,
         }}
       >
-        <h2 className="section-heading">
+        <h2
+          className="section-heading"
+          style={{
+            color: text,
+            borderLeft: `6px solid ${bg}`,
+          }}
+        >
           {slug.replace(/-/g, " ").toUpperCase()}
         </h2>
         <div className="product-list">
@@ -261,16 +265,14 @@ const Homepage = () => {
             <VariantCard key={p._id} product={p} />
           ))}
         </div>
-        <Link to={`/${slug}`} className="view-all">
+        <Link to={`/${slug}`} className="view-all" style={{ color: text }}>
           View All →
         </Link>
       </div>
     );
   };
 
-  // ------------------------------
-  // 🌟 Render Featured Section
-  // ------------------------------
+  // Render Featured Block
   const renderFeaturedBlock = (title, list, className) => {
     if (!list || list.length === 0) return null;
     const grouped = groupProductsByParent(list);
@@ -322,9 +324,7 @@ const Homepage = () => {
           banners.map((b, i) => (
             <div
               key={b._id}
-              className={`carousel-slide ${i === current ? "active" : ""} ${
-                b.animationType
-              }`}
+              className={`carousel-slide ${i === current ? "active" : ""}`}
               style={{ backgroundColor: b.backgroundColor || "#fff" }}
             >
               <picture>
@@ -337,7 +337,6 @@ const Homepage = () => {
                   className="carousel-image"
                 />
               </picture>
-
               <div className="carousel-content">
                 <h2 className="carousel-title">{b.title}</h2>
                 {b.subtitle && <p className="carousel-subtitle">{b.subtitle}</p>}

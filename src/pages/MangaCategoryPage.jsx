@@ -1,20 +1,19 @@
+// ============================================================
+// ✅ MangaCategoryPage.jsx — Dynamic Category Colors
+// ============================================================
+
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import "./categories.css";
 
 const normalizeSlug = (str) => str?.toLowerCase().replace(/\s+/g, "-").trim();
 
-const CATEGORY_COLORS = {
-  "kids-manga": { bg: "#f87171", text: "#fff" },
-  "young-boys-manga": { bg: "#60a5fa", text: "#fff" },
-  "young-girls-manga": { bg: "#34d399", text: "#fff" },
-};
-
 const MangaCategoryPage = ({ baseCategory, heading }) => {
   const navigate = useNavigate();
   const { subcategory } = useParams();
   const [productsData, setProductsData] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [sortOption, setSortOption] = useState("default");
@@ -24,7 +23,21 @@ const MangaCategoryPage = ({ baseCategory, heading }) => {
     process.env.NEXT_PUBLIC_API_URL ||
     "https://bookstore-0hqj.onrender.com";
 
-  // Fetch all products
+  // Fetch categories (with colors)
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/categories`);
+        const data = await res.json();
+        setCategories(data);
+      } catch (err) {
+        console.error("Error fetching categories:", err);
+      }
+    };
+    fetchCategories();
+  }, [API_URL]);
+
+  // Fetch products
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -46,7 +59,7 @@ const MangaCategoryPage = ({ baseCategory, heading }) => {
 
         setProductsData(filtered);
 
-        const uniqueSubcats = [
+        const uniqueSubs = [
           ...new Set(
             allProducts
               .filter((p) => normalizeSlug(p.category) === baseCatNorm)
@@ -54,7 +67,7 @@ const MangaCategoryPage = ({ baseCategory, heading }) => {
               .filter(Boolean)
           ),
         ];
-        setSubcategories(uniqueSubcats);
+        setSubcategories(uniqueSubs);
       } catch (err) {
         console.error("Error fetching products:", err);
         setError("Failed to load products.");
@@ -66,6 +79,7 @@ const MangaCategoryPage = ({ baseCategory, heading }) => {
   }, [API_URL, baseCategory, subcategory]);
 
   const handleSortChange = (e) => setSortOption(e.target.value);
+
   const getSortedProducts = () => {
     switch (sortOption) {
       case "price-low-to-high":
@@ -77,14 +91,11 @@ const MangaCategoryPage = ({ baseCategory, heading }) => {
     }
   };
 
-  // Group variants
   const groupProductsByParent = (products) => {
     const grouped = {};
     for (const p of products) {
       const key = p.parentId || p._id;
-      if (!grouped[key]) {
-        grouped[key] = { ...p, variants: [] };
-      }
+      if (!grouped[key]) grouped[key] = { ...p, variants: [] };
       grouped[key].variants.push({
         _id: p._id,
         format: p.format,
@@ -95,7 +106,17 @@ const MangaCategoryPage = ({ baseCategory, heading }) => {
     return Object.values(grouped);
   };
 
-  // 🧱 Variant-Aware Product Card
+  // Get category color dynamically
+  const getCategoryColors = (slug) => {
+    const found = categories.find(
+      (cat) => normalizeSlug(cat.name) === normalizeSlug(slug)
+    );
+    return {
+      bg: found?.color || "#f4f4f4",
+      text: found?.textColor || "#111111",
+    };
+  };
+
   const VariantCard = ({ product }) => {
     const [activeIndex, setActiveIndex] = useState(0);
     const [hovered, setHovered] = useState(false);
@@ -139,10 +160,13 @@ const MangaCategoryPage = ({ baseCategory, heading }) => {
     return (
       <div
         className="product-card variant-card"
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
       >
-        <div className="product-image-wrap" onClick={handleCardClick}>
+        <div
+          className="product-image-wrap"
+          onClick={() => navigate(`/product/${product.slug}`)}
+        >
           <img
             src={currentImage}
             alt={product.name}
@@ -182,14 +206,16 @@ const MangaCategoryPage = ({ baseCategory, heading }) => {
   if (error) return <div className="error-message">{error}</div>;
 
   const groupedProducts = groupProductsByParent(getSortedProducts());
-  const bgColor = CATEGORY_COLORS[baseCategory]?.bg || "#ccc";
-  const textColor = CATEGORY_COLORS[baseCategory]?.text || "#fff";
+  const { bg, text } = getCategoryColors(baseCategory);
 
   return (
     <div className="app">
       <h2
         className="section-heading"
-        style={{ color: textColor, borderColor: bgColor }}
+        style={{
+          color: text,
+          borderLeft: `6px solid ${bg}`,
+        }}
       >
         {heading}{" "}
         {subcategory
@@ -235,8 +261,8 @@ const MangaCategoryPage = ({ baseCategory, heading }) => {
       <div
         className="product-section"
         style={{
-          "--section-color": bgColor,
-          "--section-text-color": textColor,
+          "--section-color": bg,
+          "--section-text-color": text,
         }}
       >
         <div className="product-list">
