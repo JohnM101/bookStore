@@ -1,6 +1,7 @@
 // ============================================================
-// ✅ server/routes/adminRoutes.js — Fixed CastError (AlbumImages Sanitization)
+// ✅ server/routes/adminRoutes.js — FINAL FULL FIXED VERSION
 // ============================================================
+
 const express = require("express");
 const router = express.Router();
 const multer = require("multer");
@@ -27,6 +28,7 @@ const storage = new CloudinaryStorage({
     allowed_formats: ["jpg", "jpeg", "png", "webp"],
   },
 });
+
 const upload = multer({ storage });
 
 // ============================================================
@@ -116,12 +118,15 @@ router.post("/products", protect, admin, upload.any(), async (req, res) => {
     res.status(201).json(saved);
   } catch (error) {
     console.error("❌ Error creating product:", error);
-    res.status(500).json({ message: "Failed to create product", error: error.message });
+    res.status(500).json({
+      message: "Failed to create product",
+      error: error.message,
+    });
   }
 });
 
 // ============================================================
-// 🟠 UPDATE PRODUCT — Final Safe Version
+// 🟠 UPDATE PRODUCT — FIXED: Album Image Deletion Persists
 // ============================================================
 router.put("/products/:id", protect, admin, upload.any(), async (req, res) => {
   try {
@@ -143,19 +148,18 @@ router.put("/products/:id", protect, admin, upload.any(), async (req, res) => {
       variants = existing.variants;
     }
 
-    // ✅ Clean and merge each variant’s images
+    // ✅ Replace albums (not merge) to allow deletion
     variants = variants.map((variant, idx) => {
       const main = files.find((f) => f.fieldname === `variantMainImages_${idx}`);
       const albums = files.filter((f) => f.fieldname === `variantAlbumImages_${idx}`);
 
       const dbVariant = existing.variants[idx] || {};
-      const dbAlbums = Array.isArray(dbVariant.albumImages)
-        ? dbVariant.albumImages
-        : [];
 
       const uploadedUrls = albums.map((a) => a.path);
       const frontendAlbums = sanitizeAlbumImages(variant.albumImages);
-      const mergedAlbums = [...new Set([...dbAlbums, ...frontendAlbums, ...uploadedUrls])];
+
+      // ✅ Replace instead of merging so deletions persist
+      const mergedAlbums = [...new Set([...frontendAlbums, ...uploadedUrls])];
 
       return {
         format: variant.format || dbVariant.format,
@@ -173,7 +177,7 @@ router.put("/products/:id", protect, admin, upload.any(), async (req, res) => {
       };
     });
 
-    // ✅ In product update
+    // ✅ Update product
     const updated = await Product.findByIdAndUpdate(
       req.params.id,
       {
@@ -198,10 +202,12 @@ router.put("/products/:id", protect, admin, upload.any(), async (req, res) => {
     res.json(updated);
   } catch (error) {
     console.error("❌ Error updating product:", error);
-    res.status(500).json({ message: "Failed to update product", error: error.message });
+    res.status(500).json({
+      message: "Failed to update product",
+      error: error.message,
+    });
   }
 });
-
 
 // ============================================================
 // 🟣 GET PRODUCTS
@@ -211,6 +217,7 @@ router.get("/products", protect, admin, async (req, res) => {
     const products = await Product.find().sort({ createdAt: -1 });
     res.json(products);
   } catch (error) {
+    console.error("❌ Error fetching products:", error);
     res.status(500).json({ message: "Failed to fetch products" });
   }
 });
@@ -224,6 +231,7 @@ router.delete("/products/:id", protect, admin, async (req, res) => {
     if (!deleted) return res.status(404).json({ message: "Product not found" });
     res.json({ message: "Product deleted successfully" });
   } catch (error) {
+    console.error("❌ Error deleting product:", error);
     res.status(500).json({ message: "Failed to delete product" });
   }
 });
