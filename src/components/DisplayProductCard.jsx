@@ -1,52 +1,48 @@
-// src/components/DisplayProductCard.jsx
 import React, { useMemo } from "react";
 import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
 
 /**
  * DisplayProductCard
- * - Expects a product object that may already be an "expanded variant entry" OR a grouped product
- * - Tries to be flexible: accepts either:
- *    - product.variants (array)  OR
- *    - product.price / product.format (single-variant expanded entry)
- *
- * Behavior:
- * - Shows a single representative image (prefer variant with mainImage)
- * - Calculates minPrice across variants (if variants exist)
- * - Shows a small badge with number of formats if multiple variants
- * - Image uses loading="lazy" and onError fallback
+ * - Unified display for products that may have multiple variants (formats/offers)
+ * - Shows a single representative image
+ * - Displays either a single price or a range (min–max)
+ * - Shows an "Offers available" badge if multiple formats
  */
 const DisplayProductCard = ({ product, onClick, className = "" }) => {
   const navigate = useNavigate();
 
-  const { repImage, minPrice, formatsCount, formatLabel } = useMemo(() => {
+  const { repImage, minPrice, maxPrice, hasMultipleFormats, isPromotion } = useMemo(() => {
     let repImage = "/assets/placeholder-image.png";
     let minPrice = null;
-    let formatsCount = 0;
-    let formatLabel = "";
+    let maxPrice = null;
+    let isPromotion = product.isPromotion || false;
 
+    // If variants exist, calculate price range
     if (Array.isArray(product.variants) && product.variants.length > 0) {
-      formatsCount = product.variants.length;
-      // pick first variant with image, else first variant, else placeholder
-      const vWithImage = product.variants.find((v) => v.mainImage);
-      repImage = (vWithImage && vWithImage.mainImage) || product.variants[0].mainImage || repImage;
       const prices = product.variants
-        .map((v) => (typeof v.price === "number" ? v.price : parseFloat(v.price) || Infinity))
-        .filter((p) => Number.isFinite(p));
-      minPrice = prices.length ? Math.min(...prices) : null;
-      formatLabel = product.variants[0]?.format || "";
-    } else if (product.mainImage || product.price) {
-      repImage = product.mainImage || repImage;
-      minPrice = typeof product.price === "number" ? product.price : parseFloat(product.price) || null;
-      formatLabel = product.format || "";
-      formatsCount = product.variantsCount || (product.format ? 1 : 0);
+        .map((v) => (typeof v.price === "number" ? v.price : parseFloat(v.price) || 0))
+        .filter((p) => p > 0);
+
+      if (prices.length > 0) {
+        minPrice = Math.min(...prices);
+        maxPrice = Math.max(...prices);
+      }
+
+      // Use first available image
+      const vWithImage = product.variants.find((v) => v.mainImage);
+      repImage = (vWithImage && vWithImage.mainImage) || product.mainImage || repImage;
     } else {
-      // fallback
-      repImage = "/assets/placeholder-image.png";
-      minPrice = null;
+      // Single product fallback
+      minPrice = typeof product.price === "number" ? product.price : parseFloat(product.price) || null;
+      maxPrice = minPrice;
+      repImage = product.mainImage || repImage;
     }
 
-    return { repImage, minPrice, formatsCount, formatLabel };
+    const hasMultipleFormats =
+      Array.isArray(product.variants) && product.variants.length > 1;
+
+    return { repImage, minPrice, maxPrice, hasMultipleFormats, isPromotion };
   }, [product]);
 
   const handleClick = () => {
@@ -55,8 +51,23 @@ const DisplayProductCard = ({ product, onClick, className = "" }) => {
     navigate(`/product/${slug}`);
   };
 
+  const displayPrice =
+    minPrice && maxPrice && minPrice !== maxPrice
+      ? `₱${minPrice.toFixed(2)} – ₱${maxPrice.toFixed(2)}`
+      : minPrice
+      ? `₱${minPrice.toFixed(2)}`
+      : "N/A";
+
   return (
-    <div className={`product-card ${className}`} onClick={handleClick} role="button" tabIndex={0} onKeyDown={(e)=>{ if(e.key==='Enter') handleClick(); }}>
+    <div
+      className={`product-card ${className}`}
+      onClick={handleClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") handleClick();
+      }}
+    >
       <div className="product-image-wrap">
         <img
           src={repImage}
@@ -64,14 +75,24 @@ const DisplayProductCard = ({ product, onClick, className = "" }) => {
           loading="lazy"
           onError={(e) => (e.target.src = "/assets/placeholder-image.png")}
         />
-        {formatsCount > 1 && <span className="variant-count">{formatsCount} formats</span>}
+        {isPromotion && <span className="offer-badge">🔥 On Sale</span>}
       </div>
+
       <div className="product-info">
-        <p className="product-name" data-format={formatLabel}>{product.name}</p>
-        {product.description && <p className="product-subtitle">{product.description?.substring(0, 80)}{product.description?.length > 80 ? "…" : ""}</p>}
-        <div className="product-meta">
-          <p className="price">{minPrice !== null ? `₱${Number(minPrice).toFixed(2)}` : "N/A"}</p>
-        </div>
+        <p className="product-name">{product.name}</p>
+
+        {product.description && (
+          <p className="product-subtitle">
+            {product.description.substring(0, 70)}
+            {product.description.length > 70 ? "…" : ""}
+          </p>
+        )}
+
+        <p className="price">{displayPrice}</p>
+
+        {hasMultipleFormats && (
+          <p className="multi-format-note">Multiple formats available</p>
+        )}
       </div>
     </div>
   );

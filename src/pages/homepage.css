@@ -369,3 +369,23 @@ body {
   .disclaimer-text { font-size: 0.9rem; }
   .disclaimer-button { padding: 8px 20px; font-size: 14px; }
 }
+
+/* Extra badges and labels */
+.offer-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #e11d48;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: bold;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.multi-format-note {
+  font-size: 0.8rem;
+  color: #444;
+  margin-top: 4px;
+  font-style: italic;
+}
