@@ -3,7 +3,7 @@
 // ============================================================
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import "./styles/StaticPage.css"; // ✅ import dedicated CSS
+import "./StaticPage.css"; // ✅ import dedicated CSS
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 
