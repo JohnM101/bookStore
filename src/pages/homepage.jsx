@@ -1,5 +1,5 @@
 // ============================================================
-// ✅ Homepage.jsx — Final Variant-Aware Version
+// ✅ Homepage.jsx — Modern Banner + Interactive Carousel Version
 // ============================================================
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -21,7 +21,6 @@ const Homepage = () => {
   const [productData, setProductData] = useState({});
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState([]);
-
   const navigate = useNavigate();
 
   const API_URL =
@@ -30,17 +29,14 @@ const Homepage = () => {
     "https://bookstore-0hqj.onrender.com";
 
   // ============================================================
-  // 🔹 Fetch CMS Banners
+  // 🔹 Fetch CMS Banners (Now using modern fields)
   // ============================================================
   useEffect(() => {
     const fetchBanners = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/cms/banners`);
+        const res = await fetch(`${API_URL}/api/cms/banners?active=true`);
         const data = await res.json();
-        const active = data
-          .filter((b) => b.isActive)
-          .sort((a, b) => a.order - b.order)
-          .map((b) => b.imageUrl);
+        const active = data.filter((b) => b.isActive).sort((a, b) => a.order - b.order);
         setBanners(active);
       } catch (err) {
         console.error("❌ Error fetching banners:", err);
@@ -66,7 +62,7 @@ const Homepage = () => {
   }, [API_URL]);
 
   // ============================================================
-  // 🔹 Fetch Products (with variants expanded)
+  // 🔹 Fetch Products
   // ============================================================
   useEffect(() => {
     const fetchProducts = async () => {
@@ -74,15 +70,12 @@ const Homepage = () => {
         const res = await fetch(`${API_URL}/api/products`);
         if (!res.ok) throw new Error("Failed to fetch products");
         const allProducts = await res.json();
-
-        // ✅ Group by category slug
         const grouped = allProducts.reduce((acc, product) => {
           const catSlug = normalizeSlug(product.category);
           if (!acc[catSlug]) acc[catSlug] = [];
           acc[catSlug].push(product);
           return acc;
         }, {});
-
         setProductData(grouped);
       } catch (err) {
         console.error("❌ Error fetching products:", err);
@@ -94,7 +87,7 @@ const Homepage = () => {
   }, [API_URL]);
 
   // ============================================================
-  // 🔹 Disclaimer Modal (shown once)
+  // 🔹 Disclaimer Modal
   // ============================================================
   useEffect(() => {
     if (!localStorage.getItem("hasSeenDisclaimer")) setShowDisclaimer(true);
@@ -108,30 +101,21 @@ const Homepage = () => {
   const user = JSON.parse(localStorage.getItem("user"));
 
   // ============================================================
-  // 🔹 Auto-slide Carousel
+  // 🔹 Carousel Auto-slide
   // ============================================================
   useEffect(() => {
     if (banners.length === 0) return;
     const interval = setInterval(() => {
       setCurrent((prev) => (prev + 1) % banners.length);
-    }, 4000);
+    }, 6000);
     return () => clearInterval(interval);
   }, [banners]);
 
   // ============================================================
-  // 🔹 Category Helper
-  // ============================================================
-  const getCategoryName = (slug) => {
-    const cat = categories.find((c) => normalizeSlug(c.slug) === slug);
-    return cat ? cat.name : slug.replace(/-/g, " ");
-  };
-
-  // ============================================================
-  // 🔹 Product Section Renderer
+  // 🔹 Render Category Section
   // ============================================================
   const renderProductSection = (slug, products) => {
     if (!products || products.length === 0) return null;
-
     const bgColor = CATEGORY_COLORS[slug]?.bg || "#ccc";
     const textColor = CATEGORY_COLORS[slug]?.text || "#fff";
 
@@ -144,10 +128,7 @@ const Homepage = () => {
           "--section-text-color": textColor,
         }}
       >
-        <h2 className="section-heading">
-          {getCategoryName(slug).toUpperCase()}
-        </h2>
-
+        <h2 className="section-heading">{slug.replace(/-/g, " ").toUpperCase()}</h2>
         <div className="product-list">
           {products.slice(0, 8).map((p) => (
             <div
@@ -158,24 +139,14 @@ const Homepage = () => {
               <img
                 src={p.mainImage || "/assets/placeholder-image.png"}
                 alt={p.name}
-                onError={(e) =>
-                  (e.target.src = "/assets/placeholder-image.png")
-                }
+                onError={(e) => (e.target.src = "/assets/placeholder-image.png")}
               />
-              <p className="product-name">
-                {p.name}
-                {p.format ? ` (${p.format})` : ""}
-              </p>
-              <p className="product-subtitle">
-                {p.description?.substring(0, 40)}...
-              </p>
-              <p className="price">
-                ₱{p.price?.toFixed(2) || "N/A"}
-              </p>
+              <p className="product-name">{p.name}</p>
+              <p className="product-subtitle">{p.description?.substring(0, 40)}...</p>
+              <p className="price">₱{p.price?.toFixed(2) || "N/A"}</p>
             </div>
           ))}
         </div>
-
         <Link to={`/${slug}`} className="view-all">
           View All →
         </Link>
@@ -195,30 +166,15 @@ const Homepage = () => {
     <div className="app">
       <Navbar />
 
-      {/* Disclaimer Popup */}
+      {/* Disclaimer */}
       {showDisclaimer && (
         <div className="disclaimer-overlay">
           <div className="disclaimer-box">
             <img src="/assets/logo.png" alt="Logo" className="disclaimer-logo" />
             <h6 className="disclaimer-header">Welcome!</h6>
-            {user ? (
-              <>
-                <p className="disclaimer-text">
-                  Hello{" "}
-                  <strong>
-                    {user.firstName} {user.lastName}
-                  </strong>{" "}
-                  ({user.email}) 👋
-                </p>
-                <p className="disclaimer-text">
-                  This bookstore is for educational purposes only.
-                </p>
-              </>
-            ) : (
-              <p className="disclaimer-text">
-                This bookstore is for educational purposes only.
-              </p>
-            )}
+            <p className="disclaimer-text">
+              {user ? `Hello ${user.firstName} ${user.lastName}!` : "Welcome to our bookstore!"}
+            </p>
             <button className="disclaimer-button" onClick={handleProceed}>
               Proceed
             </button>
@@ -226,24 +182,53 @@ const Homepage = () => {
         </div>
       )}
 
-      {/* Carousel Section */}
-      <div className="carousel">
+      {/* ============================================================ */}
+      {/* 🎨 Interactive Banner Carousel */}
+      {/* ============================================================ */}
+      <div className="carousel-wrapper">
         {banners.length > 0 ? (
-          <img
-            src={banners[current]}
-            alt={`Banner ${current + 1}`}
-            className="banner-image"
-          />
+          banners.map((b, i) => (
+            <div
+              key={b._id}
+              className={`carousel-slide ${i === current ? "active" : ""} ${b.animationType}`}
+              style={{
+                backgroundColor: b.backgroundColor || "#fff",
+                color: b.textColor || "#000",
+              }}
+            >
+              <picture>
+                {b.imageMobile && (
+                  <source srcSet={b.imageMobile} media="(max-width:768px)" />
+                )}
+                <img
+                  src={b.imageDesktop}
+                  alt={b.title}
+                  className="carousel-image"
+                />
+              </picture>
+
+              <div className="carousel-content">
+                <h2 className="carousel-title">{b.title}</h2>
+                {b.subtitle && <p className="carousel-subtitle">{b.subtitle}</p>}
+                {b.ctaText && (
+                  <button
+                    className="carousel-btn"
+                    onClick={() => navigate(b.ctaLink || "/")}
+                  >
+                    {b.ctaText}
+                  </button>
+                )}
+              </div>
+            </div>
+          ))
         ) : (
-          <img
-            src="/assets/default-banner.png"
-            alt="Default Banner"
-            className="banner-image"
-          />
+          <img src="/assets/default-banner.png" alt="Default Banner" className="banner-image" />
         )}
       </div>
 
-      {/* Product Sections by Category */}
+      {/* ============================================================ */}
+      {/* 🛍️ Product Sections */}
+      {/* ============================================================ */}
       {Object.entries(productData).map(([slug, products]) =>
         renderProductSection(slug, products)
       )}

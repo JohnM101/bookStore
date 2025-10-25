@@ -1,23 +1,42 @@
-// server/routes/cmsBannerRoutes.js
-const express = require('express');
+// ============================================================
+// ✅ cmsBannerRoutes.js
+// ============================================================
+const express = require("express");
 const router = express.Router();
+const multer = require("multer");
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
+const cloudinary = require("cloudinary").v2;
+const { protect, admin } = require("../middleware/authMiddleware");
 const {
   getBanners,
   addBanner,
+  updateBanner,
   deleteBanner,
-  updateBanner
-} = require('../controllers/cmsBannerController');
+} = require("../controllers/cmsBannerController");
 
-// GET all banners
-router.get('/', getBanners);
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
-// POST new banner
-router.post('/', addBanner);
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: { folder: "bookstore-banners", allowed_formats: ["jpg", "png", "webp"] },
+});
 
-// PUT update banner
-router.put('/:id', updateBanner);
+const upload = multer({ storage });
 
-// DELETE banner
-router.delete('/:id', deleteBanner);
+// Routes
+router.get("/", getBanners);
+router.post("/", protect, admin, upload.fields([
+  { name: "imageDesktop", maxCount: 1 },
+  { name: "imageMobile", maxCount: 1 },
+]), addBanner);
+router.put("/:id", protect, admin, upload.fields([
+  { name: "imageDesktop", maxCount: 1 },
+  { name: "imageMobile", maxCount: 1 },
+]), updateBanner);
+router.delete("/:id", protect, admin, deleteBanner);
 
 module.exports = router;
