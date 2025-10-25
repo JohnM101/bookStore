@@ -1,5 +1,5 @@
 /* ============================================================
-homepage.css
+   homepage.css — Dynamic Category Colors + Pastel Tint Support
    ============================================================ */
 * {
   box-sizing: border-box;
@@ -101,10 +101,14 @@ body {
 .product-section {
   padding: 2rem 1rem;
   text-align: center;
-  border-left: 8px solid var(--section-color, #ccc);
   margin: 2rem auto;
   border-radius: 12px;
   max-width: 1200px;
+
+  /* 🟢 Soft pastel background mix based on category color */
+  background-color: color-mix(in srgb, var(--section-color, #f4f4f4) 18%, white);
+  color: var(--section-text-color, #111);
+  transition: background 0.4s ease, color 0.4s ease;
 }
 
 .section-header {
@@ -120,22 +124,28 @@ body {
   color: var(--section-text-color, #111);
   font-size: 2rem;
   font-weight: bold;
-  margin: 0;
+  margin: 0 auto 1.2rem;
+  display: inline-block;
+  border-bottom: 3px solid var(--section-text-color, #111);
+  padding-bottom: 0.3rem;
+  text-transform: uppercase;
 }
 
 .view-all {
   text-decoration: none;
-  background-color: var(--section-text-color, #fff);
-  color: var(--section-color, #000);
-  border-radius: 20px;
-  padding: 6px 14px;
+  background-color: var(--section-text-color, #111);
+  color: var(--section-color, #fafafa);
+  border-radius: 25px;
+  padding: 8px 20px;
   font-weight: bold;
-  font-size: 0.9rem;
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  display: inline-block;
+  margin-top: 1rem;
 }
 .view-all:hover {
-  opacity: 0.85;
-  transform: translateY(-2px);
+  transform: translateY(-3px);
+  opacity: 0.9;
 }
 
 /* ============================================================
@@ -145,36 +155,17 @@ body {
   margin-top: 2rem;
 }
 
-.product-shelf {
-  display: flex;
-  gap: 1rem;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  padding: 0 1rem 1rem 1rem;
-}
-.product-shelf::-webkit-scrollbar {
-  height: 8px;
-}
-.product-shelf::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.2);
-  border-radius: 4px;
-}
-.product-shelf .product-card {
-  flex: 0 0 240px;
-  scroll-snap-align: start;
-}
-
-/* Section color themes */
+/* Optional: keep gradient but softer pastel appearance */
 .featured.promotions {
-  background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+  background: linear-gradient(135deg, #f87171 0%, #fca5a5 100%);
   color: #fff;
 }
 .featured.new-arrivals {
-  background: linear-gradient(135deg, #60a5fa 0%, #2563eb 100%);
+  background: linear-gradient(135deg, #60a5fa 0%, #93c5fd 100%);
   color: #fff;
 }
 .featured.popular {
-  background: linear-gradient(135deg, #facc15 0%, #fbbf24 100%);
+  background: linear-gradient(135deg, #facc15 0%, #fde68a 100%);
   color: #000;
 }
 
@@ -193,18 +184,16 @@ body {
    🧱 PRODUCT CARD
    ============================================================ */
 .product-card {
-  background: white;
+  background: #fff;
   padding: 1rem;
   width: 100%;
   max-width: 280px;
   text-align: left;
   border-radius: 8px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  border-bottom: 3px solid var(--section-color, #ccc);
+  border-bottom: 4px solid var(--section-text-color, #111);
   transition: transform 0.3s, box-shadow 0.3s;
   cursor: pointer;
-  opacity: 1;
-  transform: none;
 }
 
 .product-card:hover {
@@ -226,7 +215,6 @@ body {
   height: 100%;
   object-fit: cover;
   border-radius: 8px;
-  opacity: 1;
   transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out;
 }
 .product-image-wrap img.fade {
@@ -279,7 +267,7 @@ body {
 
 .price {
   font-weight: bold;
-  color: #e11d48;
+  color: var(--section-text-color, #e11d48);
   margin-top: 6px;
   font-size: 1rem;
 }
@@ -395,9 +383,11 @@ body {
   white-space: nowrap;
 }
 
-.variant-btn:hover {
-  background-color: var(--section-color, #2563eb);
-  color: #fff;
+.variant-btn:hover,
+.variant-btn.active {
+  background-color: var(--section-text-color, #111);
+  color: var(--section-color, #fafafa);
+  border-color: var(--section-text-color, #111);
   transform: translateY(-2px);
 }
 
@@ -429,7 +419,6 @@ body {
   }
   .product-section {
     padding: 1.5rem 0.5rem;
-    border-left-width: 5px;
   }
   .section-heading {
     font-size: 1.5rem;

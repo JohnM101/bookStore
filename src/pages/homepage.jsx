@@ -1,5 +1,5 @@
 // ============================================================
-// ✅ Homepage.jsx — Dynamic Category Colors (from backend)
+// ✅ Homepage.jsx — Dynamic Category Colors + Soft Pastel Tint
 // ============================================================
 
 import React, { useState, useEffect, useRef } from "react";
@@ -196,10 +196,11 @@ const Homepage = () => {
     return (
       <div
         className="product-card variant-card"
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        onClick={handleCardClick}
       >
-        <div className="product-image-wrap" onClick={handleCardClick}>
+        <div className="product-image-wrap">
           <img
             src={currentImage}
             alt={product.name}
@@ -251,13 +252,7 @@ const Homepage = () => {
           "--section-text-color": text,
         }}
       >
-        <h2
-          className="section-heading"
-          style={{
-            color: text,
-            borderLeft: `6px solid ${bg}`,
-          }}
-        >
+        <h2 className="section-heading">
           {slug.replace(/-/g, " ").toUpperCase()}
         </h2>
         <div className="product-list">
@@ -265,7 +260,7 @@ const Homepage = () => {
             <VariantCard key={p._id} product={p} />
           ))}
         </div>
-        <Link to={`/${slug}`} className="view-all" style={{ color: text }}>
+        <Link to={`/${slug}`} className="view-all">
           View All →
         </Link>
       </div>
