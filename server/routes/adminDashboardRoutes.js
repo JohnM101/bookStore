@@ -1,89 +1,78 @@
-// ============================================================
-// ✅ server/routes/adminDashboardRoutes.js
-// ============================================================
-const express = require("express");
-const router = express.Router();
-const { protect, admin } = require("../middleware/authMiddleware");
-const Product = require("../models/Product");
-const Order = require("../models/Order");
-const User = require("../models/User");
+// src/components/AdminDashboard.jsx
+import React, { useEffect } from 'react';
+import { Link, Route, Routes, useNavigate } from 'react-router-dom';
+import { FaSignOutAlt } from 'react-icons/fa';
+import { useUser } from '../contexts/UserContext';
+import UserManagement from './admin/UserManagement';
+import OrderManagement from './admin/OrderManagement';
+import ProductManagement from './admin/ProductManagement';
+import CategoryManagement from './admin/CategoryManagement'; // existing import
+import './AdminDashboard.css';
+import BannerManagement from './admin/BannerManagement';
+import AdminOverview from './admin/AdminOverview';
+import StaticPageManagement from "./admin/StaticPageManagement";
+import FeaturedManagement from './admin/FeaturedManagement'; // NEW
 
-// ============================================================
-// 📊 Summary stats: total products, users, orders, revenue
-// ============================================================
-router.get("/summary", protect, admin, async (req, res) => {
-  try {
-    const totalProducts = await Product.countDocuments();
-    const totalUsers = await User.countDocuments();
-    const totalOrders = await Order.countDocuments();
+const AdminDashboard = () => {
+  const { isAdmin, logout } = useUser();
+  const navigate = useNavigate();
 
-    const totalRevenue = await Order.aggregate([
-      { $match: { isPaid: true } },
-      { $group: { _id: null, total: { $sum: "$totalPrice" } } },
-    ]);
+  // Redirect non-admin users to home
+  useEffect(() => {
+    if (!isAdmin()) {
+      navigate('/');
+      alert('Access denied — admin only');
+    }
+  }, [isAdmin, navigate]);
 
-    const revenue = totalRevenue.length > 0 ? totalRevenue[0].total : 0;
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
 
-    res.json({
-      totalProducts,
-      totalUsers,
-      totalOrders,
-      totalRevenue: revenue,
-    });
-  } catch (err) {
-    console.error("❌ Dashboard summary error:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
+  if (!isAdmin()) return <div>Access Denied</div>;
 
-// ============================================================
-// 📈 Monthly Sales Chart Data
-// ============================================================
-router.get("/sales", protect, admin, async (req, res) => {
-  try {
-    const sales = await Order.aggregate([
-      { $match: { isPaid: true } },
-      {
-        $group: {
-          _id: { $month: "$paidAt" },
-          total: { $sum: "$totalPrice" },
-        },
-      },
-      { $sort: { "_id": 1 } },
-    ]);
+  return (
+    <div className="admin-dashboard">
+      {/* Sidebar */}
+      <div className="admin-sidebar">
+        <h2>Admin Dashboard</h2>
+        <nav>
+          <ul>
+            <li><Link to="/admin/overview">Overview</Link></li>
+            <li><Link to="/admin/products">Products</Link></li>
+            <li><Link to="/admin/categories">Categories</Link></li>
+            <li><Link to="/admin/featured">Featured</Link></li> {/* NEW */}
+            <li><Link to="/admin/users">Users</Link></li>
+            <li><Link to="/admin/orders">Orders</Link></li>
+            <li><Link to="/admin/banners">Banners</Link></li>
+            <li><Link to="/admin/static-pages">Static Pages</Link></li>
+          </ul>
+        </nav>
 
-    const months = [
-      "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-    ];
+        <div className="admin-logout">
+          <button onClick={handleLogout} className="logout-btn">
+            <FaSignOutAlt /> Logout
+          </button>
+        </div>
+      </div>
 
-    const formatted = sales.map((s) => ({
-      month: months[s._id - 1],
-      total: s.total,
-    }));
+      {/* Main Content */}
+      <div className="admin-content">
+        <Routes>
+          <Route index element={<div>Welcome to Admin Dashboard</div>} />
+          <Route path="overview" element={<AdminOverview />} />
+          <Route path="products" element={<ProductManagement />} />
+          <Route path="categories" element={<CategoryManagement />} />
+          <Route path="featured" element={<FeaturedManagement />} /> {/* NEW */}
+          <Route path="users" element={<UserManagement />} />
+          <Route path="orders" element={<OrderManagement />} />
+          <Route path="banners" element={<BannerManagement />} />
+          <Route path="static-pages" element={<StaticPageManagement />} />
+        </Routes>
+      </div>
+    </div>
+  );
+};
 
-    res.json(formatted);
-  } catch (err) {
-    console.error("❌ Sales chart error:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-// ============================================================
-// 🕒 Latest 5 Paid Orders (Recent Orders Table)
-// ============================================================
-router.get("/recent-orders", protect, admin, async (req, res) => {
-  try {
-    const recentOrders = await Order.find({ isPaid: true })
-      .populate("user", "firstName lastName email")
-      .sort({ paidAt: -1 })
-      .limit(5);
-
-    res.json(recentOrders);
-  } catch (err) {
-    console.error("❌ Recent orders error:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-module.exports = router;
+export default AdminDashboard;

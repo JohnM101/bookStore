@@ -370,20 +370,3 @@ body {
   .disclaimer-button { padding: 8px 20px; font-size: 14px; }
 }
 
-/* Display multiple formats and prices neatly */
-.formats {
-  margin-top: 0.4rem;
-  font-size: 0.9rem;
-  color: #333;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.3rem 0.8rem;
-}
-
-.format-item {
-  background: #f4f4f4;
-  border-radius: 5px;
-  padding: 3px 8px;
-  font-weight: 500;
-  border: 1px solid #ddd;
-}
