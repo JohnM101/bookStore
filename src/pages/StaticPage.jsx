@@ -1,11 +1,16 @@
 // ============================================================
-// ✅ src/pages/StaticPage.jsx
+// ✅ src/pages/StaticPage.jsx — Styled & Working Version
 // ============================================================
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import "../styles/StaticPage.css"; // ✅ import dedicated CSS
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 
 const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "https://bookstore-0hqj.onrender.com";
+  process.env.REACT_APP_API_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  "https://bookstore-0hqj.onrender.com";
 
 const StaticPage = () => {
   const { slug } = useParams();
@@ -20,6 +25,7 @@ const StaticPage = () => {
         const data = await res.json();
         setPage(data);
       } catch (err) {
+        console.error("❌ Error fetching static page:", err);
         setPage(null);
       } finally {
         setLoading(false);
@@ -28,14 +34,28 @@ const StaticPage = () => {
     fetchPage();
   }, [slug]);
 
-  if (loading) return <div>Loading page...</div>;
-  if (!page) return <div>Page not found.</div>;
+  if (loading) return <div className="loading">Loading page...</div>;
+  if (!page) return <div className="not-found">Page not found.</div>;
 
   return (
-    <div className="static-page container">
-      <h1>{page.title}</h1>
-      <div dangerouslySetInnerHTML={{ __html: page.content }} />
-    </div>
+    <>
+      <Navbar />
+      <div className="static-page container">
+        <h1>{page.title}</h1>
+
+        {/* ✅ Safely render HTML content */}
+        <div
+          className="static-page-content"
+          dangerouslySetInnerHTML={{
+            __html:
+              page.content?.trim() === ""
+                ? "<p><em>No content available.</em></p>"
+                : page.content,
+          }}
+        />
+      </div>
+      <Footer />
+    </>
   );
 };
 
