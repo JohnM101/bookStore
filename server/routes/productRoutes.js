@@ -1,83 +1,125 @@
-// ============================================================
-// ✅ server/routes/productRoutes.js — Final Fixed Version
-// ============================================================
+// server/routes/productRoutes.js
 const express = require("express");
 const Product = require("../models/Product");
 const router = express.Router();
 
 /**
- * ============================================================
- * 🧠 GET /api/products
- * Fetch all products — each variant appears as its own entry
- * ============================================================
+ * Helper: expandProductsToVariantEntries(productsArray)
+ * returns array where each variant is a distinct entry (same format you used)
  */
-router.get("/", async (req, res) => {
-  try {
-    const products = await Product.find().sort({ createdAt: -1 });
+const expandProductsToVariantEntries = (products) => {
+  const expandedProducts = [];
 
-    const expandedProducts = [];
-
-    for (const p of products) {
-      if (p.variants && p.variants.length > 0) {
-        p.variants.forEach((v) => {
-          expandedProducts.push({
-            _id: `${p._id}-${v._id}`,
-            parentId: p._id,
-            name: p.name,
-            description: p.description,
-            category: p.category,
-            subcategory: p.subcategory,
-            slug: p.slug,
-            format: v.format || "Standard",
-            price: v.price,
-            countInStock: v.countInStock,
-            mainImage: v.mainImage || null,
-            albumImages: v.albumImages?.length ? v.albumImages : [],
-            isbn: v.isbn,
-            trimSize: v.trimSize,
-            pages: v.pages,
-            seriesTitle: p.seriesTitle,
-            volumeNumber: p.volumeNumber,
-            publisher: p.publisher,
-            author: p.author,
-            age: p.age,
-            publicationDate: p.publicationDate,
-            variantsCount: p.variants.length,
-            createdAt: p.createdAt,
-            updatedAt: p.updatedAt,
-          });
-        });
-      } else {
+  for (const p of products) {
+    if (p.variants && p.variants.length > 0) {
+      p.variants.forEach((v) => {
         expandedProducts.push({
-          _id: p._id,
+          _id: `${p._id}-${v._id}`,
           parentId: p._id,
           name: p.name,
           description: p.description,
           category: p.category,
           subcategory: p.subcategory,
           slug: p.slug,
-          format: "Standard",
-          price: p.price || 0,
-          countInStock: p.countInStock || 0,
-          mainImage: null,
-          albumImages: [],
-          isbn: "",
-          trimSize: "",
-          pages: 0,
+          format: v.format || "Standard",
+          price: v.price,
+          countInStock: v.countInStock,
+          mainImage: v.mainImage || null,
+          albumImages: v.albumImages?.length ? v.albumImages : [],
+          isbn: v.isbn,
+          trimSize: v.trimSize,
+          pages: v.pages,
           seriesTitle: p.seriesTitle,
           volumeNumber: p.volumeNumber,
           publisher: p.publisher,
           author: p.author,
           age: p.age,
           publicationDate: p.publicationDate,
-          variantsCount: 0,
+          variantsCount: p.variants.length,
           createdAt: p.createdAt,
           updatedAt: p.updatedAt,
+          // carry featured flags down for easy frontend usage
+          isPromotion: p.isPromotion,
+          isNewArrival: p.isNewArrival,
+          isPopular: p.isPopular,
         });
-      }
+      });
+    } else {
+      expandedProducts.push({
+        _id: p._id,
+        parentId: p._id,
+        name: p.name,
+        description: p.description,
+        category: p.category,
+        subcategory: p.subcategory,
+        slug: p.slug,
+        format: "Standard",
+        price: p.price || 0,
+        countInStock: p.countInStock || 0,
+        mainImage: null,
+        albumImages: [],
+        isbn: "",
+        trimSize: "",
+        pages: 0,
+        seriesTitle: p.seriesTitle,
+        volumeNumber: p.volumeNumber,
+        publisher: p.publisher,
+        author: p.author,
+        age: p.age,
+        publicationDate: p.publicationDate,
+        variantsCount: 0,
+        createdAt: p.createdAt,
+        updatedAt: p.updatedAt,
+        isPromotion: p.isPromotion,
+        isNewArrival: p.isNewArrival,
+        isPopular: p.isPopular,
+      });
     }
+  }
 
-    res.json(expandedProducts);
+  return expandedProducts;
+};
+
+/**
+ * GET /api/products/featured
+ * returns expanded variant entries for promotions, newArrivals, popular
+ */
+router.get("/featured", async (req, res) => {
+  try {
+    const promotionsProducts = await Product.find({ isPromotion: true, status: "Active" }).sort({
+      updatedAt: -1,
+    }).limit(20);
+    const newArrivalsProducts = await Product.find({ isNewArrival: true, status: "Active" })
+      .sort({ createdAt: -1 })
+      .limit(20);
+    const popularProducts = await Product.find({ isPopular: true, status: "Active" })
+      .sort({ updatedAt: -1 })
+      .limit(20);
+
+    const promotions = expandProductsToVariantEntries(promotionsProducts);
+    const newArrivals = expandProductsToVariantEntries(newArrivalsProducts);
+    const popular = expandProductsToVariantEntries(popularProducts);
+
+    res.json({
+      promotions,
+      newArrivals,
+      popular,
+    });
+  } catch (error) {
+    console.error("❌ Error fetching featured products:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
+/**
+ * GET /api/products
+ * Fetch all products — each variant appears as its own entry
+ */
+router.get("/", async (req, res) => {
+  try {
+    const products = await Product.find().sort({ createdAt: -1 });
+    const expanded = expandProductsToVariantEntries(products);
+    res.json(expanded);
   } catch (error) {
     console.error("❌ Error fetching products:", error);
     res.status(500).json({ message: "Server error", error: error.message });
@@ -85,10 +127,7 @@ router.get("/", async (req, res) => {
 });
 
 /**
- * ============================================================
- * 🧠 GET /api/products/category/:slug
- * Fetch all products for a category/subcategory
- * ============================================================
+ * GET /api/products/category/:slug
  */
 router.get("/category/:slug", async (req, res) => {
   try {
@@ -97,72 +136,10 @@ router.get("/category/:slug", async (req, res) => {
       $or: [{ category: slug }, { subcategory: slug }],
     }).sort({ createdAt: -1 });
 
-    if (!products.length)
-      return res.status(404).json({ message: "No products found" });
+    if (!products.length) return res.status(404).json({ message: "No products found" });
 
-    const expandedProducts = [];
-
-    for (const p of products) {
-      if (p.variants && p.variants.length > 0) {
-        p.variants.forEach((v) => {
-          expandedProducts.push({
-            _id: `${p._id}-${v._id}`,
-            parentId: p._id,
-            name: p.name,
-            description: p.description,
-            category: p.category,
-            subcategory: p.subcategory,
-            slug: p.slug,
-            format: v.format,
-            price: v.price,
-            countInStock: v.countInStock,
-            mainImage: v.mainImage || null,
-            albumImages: v.albumImages?.length ? v.albumImages : [],
-            isbn: v.isbn,
-            trimSize: v.trimSize,
-            pages: v.pages,
-            seriesTitle: p.seriesTitle,
-            volumeNumber: p.volumeNumber,
-            publisher: p.publisher,
-            author: p.author,
-            age: p.age,
-            publicationDate: p.publicationDate,
-            variantsCount: p.variants.length,
-            createdAt: p.createdAt,
-            updatedAt: p.updatedAt,
-          });
-        });
-      } else {
-        expandedProducts.push({
-          _id: p._id,
-          parentId: p._id,
-          name: p.name,
-          description: p.description,
-          category: p.category,
-          subcategory: p.subcategory,
-          slug: p.slug,
-          format: "Standard",
-          price: p.price || 0,
-          countInStock: p.countInStock || 0,
-          mainImage: null,
-          albumImages: [],
-          isbn: "",
-          trimSize: "",
-          pages: 0,
-          seriesTitle: p.seriesTitle,
-          volumeNumber: p.volumeNumber,
-          publisher: p.publisher,
-          author: p.author,
-          age: p.age,
-          publicationDate: p.publicationDate,
-          variantsCount: 0,
-          createdAt: p.createdAt,
-          updatedAt: p.updatedAt,
-        });
-      }
-    }
-
-    res.json(expandedProducts);
+    const expanded = expandProductsToVariantEntries(products);
+    res.json(expanded);
   } catch (error) {
     console.error("❌ Error fetching category products:", error);
     res.status(500).json({ message: "Server error", error: error.message });
@@ -170,10 +147,8 @@ router.get("/category/:slug", async (req, res) => {
 });
 
 /**
- * ============================================================
- * 🧠 GET /api/products/:id
+ * GET /api/products/:id
  * Fetch single product by Mongo ID or slug
- * ============================================================
  */
 router.get("/:id", async (req, res) => {
   try {
@@ -182,9 +157,7 @@ router.get("/:id", async (req, res) => {
 
     const product = await Product.findOne(isObjectId ? { _id: id } : { slug: id });
 
-    if (!product) {
-      return res.status(404).json({ message: "Product not found" });
-    }
+    if (!product) return res.status(404).json({ message: "Product not found" });
 
     res.json({
       _id: product._id,
@@ -212,6 +185,9 @@ router.get("/:id", async (req, res) => {
           mainImage: v.mainImage,
           albumImages: v.albumImages || [],
         })) || [],
+      isPromotion: product.isPromotion,
+      isNewArrival: product.isNewArrival,
+      isPopular: product.isPopular,
       createdAt: product.createdAt,
       updatedAt: product.updatedAt,
     });

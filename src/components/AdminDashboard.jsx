@@ -1,4 +1,4 @@
-//src/components/AdminDashboard.jsx
+// src/components/AdminDashboard.jsx
 import React, { useEffect } from 'react';
 import { Link, Route, Routes, useNavigate } from 'react-router-dom';
 import { FaSignOutAlt } from 'react-icons/fa';
@@ -6,12 +6,12 @@ import { useUser } from '../contexts/UserContext';
 import UserManagement from './admin/UserManagement';
 import OrderManagement from './admin/OrderManagement';
 import ProductManagement from './admin/ProductManagement';
-import CategoryManagement from './admin/CategoryManagement'; // ✅ NEW import
+import CategoryManagement from './admin/CategoryManagement'; // existing import
 import './AdminDashboard.css';
 import BannerManagement from './admin/BannerManagement';
 import AdminOverview from './admin/AdminOverview';
 import StaticPageManagement from "./admin/StaticPageManagement";
-
+import FeaturedManagement from './admin/FeaturedManagement'; // NEW
 
 const AdminDashboard = () => {
   const { isAdmin, logout } = useUser();
@@ -25,7 +25,6 @@ const AdminDashboard = () => {
     }
   }, [isAdmin, navigate]);
 
-
   const handleLogout = () => {
     logout();
     navigate('/');
@@ -35,29 +34,18 @@ const AdminDashboard = () => {
 
   return (
     <div className="admin-dashboard">
-      {/* === Sidebar === */}
+      {/* Sidebar */}
       <div className="admin-sidebar">
         <h2>Admin Dashboard</h2>
         <nav>
           <ul>
-            <li>
-              <Link to="/admin/overview">Overview</Link>
-            </li>
-            <li>
-              <Link to="/admin/products">Products</Link>
-            </li>
-            <li>
-              <Link to="/admin/categories">Categories</Link> 
-            </li>
-            <li>
-              <Link to="/admin/users">Users</Link>
-            </li>
-            <li>
-              <Link to="/admin/orders">Orders</Link>
-            </li>
-            <li>
-              <Link to="/admin/banners">Banners</Link>
-            </li>
+            <li><Link to="/admin/overview">Overview</Link></li>
+            <li><Link to="/admin/products">Products</Link></li>
+            <li><Link to="/admin/categories">Categories</Link></li>
+            <li><Link to="/admin/featured">Featured</Link></li> {/* NEW */}
+            <li><Link to="/admin/users">Users</Link></li>
+            <li><Link to="/admin/orders">Orders</Link></li>
+            <li><Link to="/admin/banners">Banners</Link></li>
             <li><Link to="/admin/static-pages">Static Pages</Link></li>
           </ul>
         </nav>
@@ -69,18 +57,19 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* === Main Content === */}
+      {/* Main Content */}
       <div className="admin-content">
-      <Routes>
-        <Route index element={<div>Welcome to Admin Dashboard</div>} />
-        <Route path="overview" element={<AdminOverview />} /> 
-        <Route path="products" element={<ProductManagement />} />
-        <Route path="categories" element={<CategoryManagement />} />
-        <Route path="users" element={<UserManagement />} />
-        <Route path="orders" element={<OrderManagement />} />
-        <Route path="banners" element={<BannerManagement />} />
-        <Route path="static-pages" element={<StaticPageManagement />} />
-      </Routes>
+        <Routes>
+          <Route index element={<div>Welcome to Admin Dashboard</div>} />
+          <Route path="overview" element={<AdminOverview />} />
+          <Route path="products" element={<ProductManagement />} />
+          <Route path="categories" element={<CategoryManagement />} />
+          <Route path="featured" element={<FeaturedManagement />} /> {/* NEW */}
+          <Route path="users" element={<UserManagement />} />
+          <Route path="orders" element={<OrderManagement />} />
+          <Route path="banners" element={<BannerManagement />} />
+          <Route path="static-pages" element={<StaticPageManagement />} />
+        </Routes>
       </div>
     </div>
   );

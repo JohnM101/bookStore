@@ -1,6 +1,4 @@
-// ============================================================
-// ✅ server/models/Product.js — Final Variant-Only Schema
-// ============================================================
+// server/models/Product.js
 const mongoose = require("mongoose");
 
 const variantSchema = new mongoose.Schema({
@@ -34,6 +32,11 @@ const productSchema = new mongoose.Schema(
       enum: ["Active", "Inactive", "Out of Stock"],
       default: "Active",
     },
+
+    // Featured flags
+    isPromotion: { type: Boolean, default: false },
+    isNewArrival: { type: Boolean, default: false },
+    isPopular: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

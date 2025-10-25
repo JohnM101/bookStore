@@ -1,6 +1,4 @@
-// ============================================================
-// ✅ src/components/admin/ProductManagement.jsx — FINAL STABLE VERSION
-// ============================================================
+// src/components/admin/ProductManagement.jsx
 import React, { useState, useEffect, useCallback } from "react";
 import { useUser } from "../../contexts/UserContext";
 import { fetchWithAuth } from "../../utils/fetchWithAuth";
@@ -31,7 +29,11 @@ const ProductManagement = () => {
     publicationDate: "",
     age: "",
     variants: [],
-    status: "Active", // ✅ Added status field
+    status: "Active",
+    // Featured flags
+    isPromotion: false,
+    isNewArrival: false,
+    isPopular: false,
   });
 
   useEffect(() => {
@@ -39,6 +41,7 @@ const ProductManagement = () => {
       fetchProducts();
       fetchCategories();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const fetchProducts = async () => {
@@ -76,13 +79,16 @@ const ProductManagement = () => {
   };
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData((prev) => {
-      const updated = { ...prev, [name]: value };
+      const next = {
+        ...prev,
+        [name]: type === "checkbox" ? checked : value,
+      };
       if (name === "name" || name === "volumeNumber") {
-        updated.slug = generateSlug(updated.name, updated.volumeNumber);
+        next.slug = generateSlug(next.name, next.volumeNumber);
       }
-      return updated;
+      return next;
     });
   };
 
@@ -168,10 +174,16 @@ const ProductManagement = () => {
       const method = isEditing ? "PUT" : "POST";
       const data = new FormData();
 
+      // Append all simple keys (including booleans -> strings)
       Object.keys(formData).forEach((key) => {
-        if (key !== "variants") data.append(key, formData[key]);
+        if (key !== "variants") {
+          const val = formData[key];
+          // FormData wants strings or Blobs; booleans will be cast to "true"/"false"
+          data.append(key, val === undefined || val === null ? "" : val);
+        }
       });
 
+      // Append variant files
       formData.variants.forEach((v, idx) => {
         if (v.mainImage instanceof File) {
           data.append(`variantMainImages_${idx}`, v.mainImage);
@@ -200,7 +212,10 @@ const ProductManagement = () => {
       data.append("variants", JSON.stringify(serializedVariants));
 
       const res = await fetchWithAuth(url, { method, body: data }, user.token);
-      if (!res.ok) throw new Error("Failed to save product");
+      if (!res.ok) {
+        const errText = await res.text().catch(() => "");
+        throw new Error(`Failed to save product ${res.status} ${errText}`);
+      }
 
       await fetchProducts();
       resetForm();
@@ -238,7 +253,10 @@ const ProductManagement = () => {
           mainPreview: v.mainImage || null,
           albumImages: v.albumImages?.map((url) => ({ preview: url })) || [],
         })) || [],
-      status: p.status || "Active", // ✅ added
+      status: p.status || "Active",
+      isPromotion: !!p.isPromotion,
+      isNewArrival: !!p.isNewArrival,
+      isPopular: !!p.isPopular,
     });
     setIsEditing(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -276,7 +294,10 @@ const ProductManagement = () => {
       publicationDate: "",
       age: "",
       variants: [],
-      status: "Active", // ✅ added
+      status: "Active",
+      isPromotion: false,
+      isNewArrival: false,
+      isPopular: false,
     });
     setIsEditing(false);
     setCurrentProduct(null);
@@ -289,14 +310,16 @@ const ProductManagement = () => {
       <div className="product-form-container">
         <h2>{isEditing ? "Edit Product" : "Add New Product"}</h2>
         <form onSubmit={handleSubmit} className="product-form">
-          {[{ name: "name", label: "Product Name", type: "text", required: true },
+          {[
+            { name: "name", label: "Product Name", type: "text", required: true },
             { name: "slug", label: "Slug (auto)", type: "text" },
             { name: "seriesTitle", label: "Series Title", type: "text" },
             { name: "volumeNumber", label: "Volume Number", type: "number" },
             { name: "publisher", label: "Publisher", type: "text" },
             { name: "author", label: "Author", type: "text" },
             { name: "publicationDate", label: "Publication Date", type: "date" },
-            { name: "age", label: "Age Range", type: "text" }].map((field) => (
+            { name: "age", label: "Age Range", type: "text" },
+          ].map((field) => (
             <div className="form-group floating-label" key={field.name}>
               <input
                 type={field.type}
@@ -311,18 +334,48 @@ const ProductManagement = () => {
             </div>
           ))}
 
-          {/* ✅ Product Status Selector */}
+          {/* Status */}
           <div className="form-group">
             <label>Status</label>
-            <select
-              name="status"
-              value={formData.status}
-              onChange={handleInputChange}
-            >
+            <select name="status" value={formData.status} onChange={handleInputChange}>
               <option value="Active">Active</option>
               <option value="Inactive">Inactive</option>
               <option value="Out of Stock">Out of Stock</option>
             </select>
+          </div>
+
+          {/* Featured Flags */}
+          <div className="form-group">
+            <label>Featured Sections</label>
+            <div className="checkbox-group">
+              <label>
+                <input
+                  type="checkbox"
+                  name="isPromotion"
+                  checked={formData.isPromotion}
+                  onChange={handleInputChange}
+                />{" "}
+                Promotion
+              </label>
+              <label>
+                <input
+                  type="checkbox"
+                  name="isNewArrival"
+                  checked={formData.isNewArrival}
+                  onChange={handleInputChange}
+                />{" "}
+                New Arrival
+              </label>
+              <label>
+                <input
+                  type="checkbox"
+                  name="isPopular"
+                  checked={formData.isPopular}
+                  onChange={handleInputChange}
+                />{" "}
+                Popular
+              </label>
+            </div>
           </div>
 
           <div className="form-group full-width">
@@ -371,9 +424,7 @@ const ProductManagement = () => {
                   <input
                     type="file"
                     accept="image/*"
-                    onChange={(e) =>
-                      handleVariantMainImage(idx, e.target.files[0])
-                    }
+                    onChange={(e) => handleVariantMainImage(idx, e.target.files[0])}
                   />
                   {v.mainPreview && (
                     <img
@@ -387,9 +438,7 @@ const ProductManagement = () => {
                     type="file"
                     multiple
                     accept="image/*"
-                    onChange={(e) =>
-                      handleVariantAlbumImages(idx, e.target.files)
-                    }
+                    onChange={(e) => handleVariantAlbumImages(idx, e.target.files)}
                   />
                   <div className="album-preview">
                     {v.albumImages.map((img, i) => (
@@ -405,11 +454,7 @@ const ProductManagement = () => {
                       </div>
                     ))}
                   </div>
-                  <button
-                    type="button"
-                    className="btn-delete"
-                    onClick={() => removeVariant(idx)}
-                  >
+                  <button type="button" className="btn-delete" onClick={() => removeVariant(idx)}>
                     Remove Variant
                   </button>
                 </div>
@@ -446,6 +491,7 @@ const ProductManagement = () => {
                 <th>Variants</th>
                 <th>Stock</th>
                 <th>Status</th>
+                <th>Featured</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -455,25 +501,22 @@ const ProductManagement = () => {
                   <td>{p.name}</td>
                   <td>{p.category}</td>
                   <td>
-                    {p.variants
-                      ?.map((v) => `${v.format}: ₱${v.price}`)
-                      .join(" | ")}
+                    {p.variants?.map((v) => `${v.format}: ₱${v.price}`).join(" | ")}
                   </td>
                   <td>
-                    {p.variants?.reduce(
-                      (sum, v) => sum + (v.countInStock || 0),
-                      0
-                    )}
+                    {p.variants?.reduce((sum, v) => sum + (v.countInStock || 0), 0)}
                   </td>
                   <td>{p.status}</td>
+                  <td>
+                    {p.isPromotion && <span className="badge red">Promo</span>}
+                    {p.isNewArrival && <span className="badge blue">New</span>}
+                    {p.isPopular && <span className="badge yellow">Popular</span>}
+                  </td>
                   <td className="actions">
                     <button className="btn-edit" onClick={() => handleEdit(p)}>
                       Edit
                     </button>
-                    <button
-                      className="btn-delete"
-                      onClick={() => handleDelete(p._id)}
-                    >
+                    <button className="btn-delete" onClick={() => handleDelete(p._id)}>
                       Delete
                     </button>
                   </td>

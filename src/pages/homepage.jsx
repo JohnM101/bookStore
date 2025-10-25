@@ -1,6 +1,4 @@
-// ============================================================
-// ✅ Homepage.jsx — Modern Banner + Interactive Carousel (Fixed Readability)
-// ============================================================
+// src/pages/Homepage.jsx
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
@@ -21,6 +19,7 @@ const Homepage = () => {
   const [productData, setProductData] = useState({});
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState([]);
+  const [featured, setFeatured] = useState({ promotions: [], newArrivals: [], popular: [] });
   const navigate = useNavigate();
 
   const API_URL =
@@ -28,9 +27,7 @@ const Homepage = () => {
     process.env.NEXT_PUBLIC_API_URL ||
     "https://bookstore-0hqj.onrender.com";
 
-  // ============================================================
-  // 🔹 Fetch CMS Banners
-  // ============================================================
+  // Fetch CMS banners
   useEffect(() => {
     const fetchBanners = async () => {
       try {
@@ -45,9 +42,7 @@ const Homepage = () => {
     fetchBanners();
   }, [API_URL]);
 
-  // ============================================================
-  // 🔹 Fetch Categories
-  // ============================================================
+  // Fetch categories
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -61,9 +56,7 @@ const Homepage = () => {
     fetchCategories();
   }, [API_URL]);
 
-  // ============================================================
-  // 🔹 Fetch Products
-  // ============================================================
+  // Fetch products (expanded entries)
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -86,9 +79,27 @@ const Homepage = () => {
     fetchProducts();
   }, [API_URL]);
 
-  // ============================================================
-  // 🔹 Disclaimer Modal
-  // ============================================================
+  // Fetch featured
+  useEffect(() => {
+    const fetchFeatured = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/products/featured`);
+        if (!res.ok) throw new Error("Failed to fetch featured");
+        const data = await res.json();
+        setFeatured({
+          promotions: data.promotions || [],
+          newArrivals: data.newArrivals || [],
+          popular: data.popular || [],
+        });
+      } catch (err) {
+        console.error("❌ Error fetching featured:", err);
+        setFeatured({ promotions: [], newArrivals: [], popular: [] });
+      }
+    };
+    fetchFeatured();
+  }, [API_URL]);
+
+  // Disclaimer modal
   useEffect(() => {
     if (!localStorage.getItem("hasSeenDisclaimer")) setShowDisclaimer(true);
   }, []);
@@ -100,9 +111,7 @@ const Homepage = () => {
 
   const user = JSON.parse(localStorage.getItem("user"));
 
-  // ============================================================
-  // 🔹 Carousel Auto-slide
-  // ============================================================
+  // Carousel auto-slide
   useEffect(() => {
     if (banners.length === 0) return;
     const interval = setInterval(() => {
@@ -111,9 +120,7 @@ const Homepage = () => {
     return () => clearInterval(interval);
   }, [banners]);
 
-  // ============================================================
-  // 🔹 Render Product Section
-  // ============================================================
+  // Render product section for categories
   const renderProductSection = (slug, products) => {
     if (!products || products.length === 0) return null;
     const bgColor = CATEGORY_COLORS[slug]?.bg || "#ccc";
@@ -154,14 +161,38 @@ const Homepage = () => {
     );
   };
 
-  // ============================================================
-  // 🔹 UI States
-  // ============================================================
+  // render featured small helper
+  const renderFeaturedBlock = (title, list, className) => {
+    if (!list || list.length === 0) return null;
+    return (
+      <div className={`product-section ${className}`}>
+        <h2 className="section-heading">{title}</h2>
+        <div className="product-list">
+          {list.slice(0, 8).map((p) => (
+            <div
+              key={p._id}
+              className="product-card"
+              onClick={() => navigate(`/product/${p.slug || p.parentId || p._id}`)}
+            >
+              <img
+                src={p.mainImage || "/assets/placeholder-image.png"}
+                alt={p.name}
+                onError={(e) => (e.target.src = "/assets/placeholder-image.png")}
+              />
+              <p className="product-name">{p.name}</p>
+              <p className="price">₱{p.price?.toFixed(2) || "N/A"}</p>
+            </div>
+          ))}
+        </div>
+        <Link to={`/collections/${title.toLowerCase().replace(/\s+/g, "-")}`} className="view-all">
+          View All →
+        </Link>
+      </div>
+    );
+  };
+
   if (loading) return <div className="loading">Loading products...</div>;
 
-  // ============================================================
-  // 🔹 Render Homepage
-  // ============================================================
   return (
     <div className="app">
       <Navbar />
@@ -182,39 +213,25 @@ const Homepage = () => {
         </div>
       )}
 
-      {/* ============================================================ */}
-      {/* 🎨 Interactive Banner Carousel — Fixed Overlay Version */}
-      {/* ============================================================ */}
+      {/* Banner Carousel */}
       <div className="carousel-wrapper">
         {banners.length > 0 ? (
           banners.map((b, i) => (
             <div
               key={b._id}
               className={`carousel-slide ${i === current ? "active" : ""} ${b.animationType}`}
-              style={{
-                backgroundColor: b.backgroundColor || "#fff",
-              }}
+              style={{ backgroundColor: b.backgroundColor || "#fff" }}
             >
-              {/* Dark gradient overlay handled in CSS ::before */}
               <picture>
-                {b.imageMobile && (
-                  <source srcSet={b.imageMobile} media="(max-width:768px)" />
-                )}
-                <img
-                  src={b.imageDesktop}
-                  alt={b.title}
-                  className="carousel-image"
-                />
+                {b.imageMobile && <source srcSet={b.imageMobile} media="(max-width:768px)" />}
+                <img src={b.imageDesktop} alt={b.title} className="carousel-image" />
               </picture>
 
               <div className="carousel-content">
                 <h2 className="carousel-title">{b.title}</h2>
                 {b.subtitle && <p className="carousel-subtitle">{b.subtitle}</p>}
                 {b.ctaText && (
-                  <button
-                    className="carousel-btn"
-                    onClick={() => navigate(b.ctaLink || "/")}
-                  >
+                  <button className="carousel-btn" onClick={() => navigate(b.ctaLink || "/")}>
                     {b.ctaText}
                   </button>
                 )}
@@ -226,12 +243,15 @@ const Homepage = () => {
         )}
       </div>
 
-      {/* ============================================================ */}
-      {/* 🛍️ Product Sections */}
-      {/* ============================================================ */}
-      {Object.entries(productData).map(([slug, products]) =>
-        renderProductSection(slug, products)
-      )}
+      {/* Featured Sections */}
+      <div className="featured-wrapper">
+        {renderFeaturedBlock("🔥 Promotions", featured.promotions, "featured promotions")}
+        {renderFeaturedBlock("🆕 New Arrivals", featured.newArrivals, "featured new-arrivals")}
+        {renderFeaturedBlock("⭐ Popular Products", featured.popular, "featured popular")}
+      </div>
+
+      {/* Category-based Product Sections */}
+      {Object.entries(productData).map(([slug, products]) => renderProductSection(slug, products))}
     </div>
   );
 };

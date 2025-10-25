@@ -1,7 +1,4 @@
-// ============================================================
-// ✅ server/routes/adminRoutes.js — FINAL FULL FIXED VERSION
-// ============================================================
-
+// server/routes/adminRoutes.js
 const express = require("express");
 const router = express.Router();
 const multer = require("multer");
@@ -12,9 +9,7 @@ const User = require("../models/User");
 const Order = require("../models/Order");
 const { protect, admin } = require("../middleware/authMiddleware");
 
-// ============================================================
-// 🔧 CLOUDINARY CONFIG
-// ============================================================
+// CLOUDINARY CONFIG
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -31,9 +26,7 @@ const storage = new CloudinaryStorage({
 
 const upload = multer({ storage });
 
-// ============================================================
-// 🧠 Helper: Slug & Sanitizer
-// ============================================================
+// Helper: slug & sanitize album images
 const generateSlug = (name) =>
   name
     ?.toLowerCase()
@@ -42,7 +35,6 @@ const generateSlug = (name) =>
     ?.replace(/\s+/g, "-")
     ?.replace(/--+/g, "-") || "";
 
-// ✅ Clean up albumImages: keep only string URLs
 const sanitizeAlbumImages = (images = []) => {
   return images
     .map((img) => {
@@ -54,9 +46,7 @@ const sanitizeAlbumImages = (images = []) => {
     .filter(Boolean);
 };
 
-// ============================================================
-// 🟢 CREATE PRODUCT
-// ============================================================
+// CREATE PRODUCT
 router.post("/products", protect, admin, upload.any(), async (req, res) => {
   try {
     const body = req.body || {};
@@ -73,16 +63,11 @@ router.post("/products", protect, admin, upload.any(), async (req, res) => {
       }
     }
 
-    // ✅ Attach Cloudinary images and clean data
     variants = variants.map((variant, idx) => {
       const main = files.find((f) => f.fieldname === `variantMainImages_${idx}`);
       const albums = files.filter((f) => f.fieldname === `variantAlbumImages_${idx}`);
-
       const uploadedUrls = albums.map((a) => a.path);
-      const cleanedAlbums = [
-        ...sanitizeAlbumImages(variant.albumImages),
-        ...uploadedUrls,
-      ];
+      const cleanedAlbums = [...sanitizeAlbumImages(variant.albumImages), ...uploadedUrls];
 
       return {
         format: variant.format,
@@ -96,7 +81,9 @@ router.post("/products", protect, admin, upload.any(), async (req, res) => {
       };
     });
 
-    // ✅ In product creation
+    // parse featured flags (FormData values become strings "true"/"false")
+    const parseBool = (val) => val === true || val === "true" || val === "1";
+
     const product = new Product({
       name: body.name,
       description: body.description,
@@ -111,7 +98,10 @@ router.post("/products", protect, admin, upload.any(), async (req, res) => {
       publicationDate: body.publicationDate || null,
       age: body.age,
       variants,
-      status: body.status || "Active", // ✅ added
+      status: body.status || "Active",
+      isPromotion: parseBool(body.isPromotion),
+      isNewArrival: parseBool(body.isNewArrival),
+      isPopular: parseBool(body.isPopular),
     });
 
     const saved = await product.save();
@@ -125,9 +115,7 @@ router.post("/products", protect, admin, upload.any(), async (req, res) => {
   }
 });
 
-// ============================================================
-// 🟠 UPDATE PRODUCT — FIXED: Album Image Deletion Persists
-// ============================================================
+// UPDATE PRODUCT
 router.put("/products/:id", protect, admin, upload.any(), async (req, res) => {
   try {
     const body = req.body || {};
@@ -138,17 +126,15 @@ router.put("/products/:id", protect, admin, upload.any(), async (req, res) => {
 
     const slugValue = body.slug?.trim() || generateSlug(body.name);
 
-    // ✅ Parse variants safely (fallback to existing)
+    // parse variants safely (fallback to existing)
     let variants = [];
     try {
       variants = JSON.parse(body.variants);
-      if (!Array.isArray(variants) || variants.length === 0)
-        variants = existing.variants;
+      if (!Array.isArray(variants) || variants.length === 0) variants = existing.variants;
     } catch {
       variants = existing.variants;
     }
 
-    // ✅ Replace albums (not merge) to allow deletion
     variants = variants.map((variant, idx) => {
       const main = files.find((f) => f.fieldname === `variantMainImages_${idx}`);
       const albums = files.filter((f) => f.fieldname === `variantAlbumImages_${idx}`);
@@ -158,7 +144,7 @@ router.put("/products/:id", protect, admin, upload.any(), async (req, res) => {
       const uploadedUrls = albums.map((a) => a.path);
       const frontendAlbums = sanitizeAlbumImages(variant.albumImages);
 
-      // ✅ Replace instead of merging so deletions persist
+      // replace/merge so deletions persist
       const mergedAlbums = [...new Set([...frontendAlbums, ...uploadedUrls])];
 
       return {
@@ -168,16 +154,16 @@ router.put("/products/:id", protect, admin, upload.any(), async (req, res) => {
         isbn: variant.isbn || dbVariant.isbn,
         trimSize: variant.trimSize || dbVariant.trimSize,
         pages: variant.pages || dbVariant.pages,
-        mainImage: main
-          ? main.path
-          : sanitizeAlbumImages([variant.mainImage])[0] ||
-            dbVariant.mainImage ||
-            "",
+        mainImage:
+          main
+            ? main.path
+            : sanitizeAlbumImages([variant.mainImage])[0] || dbVariant.mainImage || "",
         albumImages: mergedAlbums.filter(Boolean),
       };
     });
 
-    // ✅ Update product
+    const parseBool = (val) => val === true || val === "true" || val === "1";
+
     const updated = await Product.findByIdAndUpdate(
       req.params.id,
       {
@@ -194,7 +180,10 @@ router.put("/products/:id", protect, admin, upload.any(), async (req, res) => {
         publicationDate: body.publicationDate || null,
         age: body.age,
         variants,
-        status: body.status || existing.status, // ✅ added
+        status: body.status || existing.status,
+        isPromotion: parseBool(body.isPromotion ?? existing.isPromotion),
+        isNewArrival: parseBool(body.isNewArrival ?? existing.isNewArrival),
+        isPopular: parseBool(body.isPopular ?? existing.isPopular),
       },
       { new: true }
     );
@@ -209,9 +198,7 @@ router.put("/products/:id", protect, admin, upload.any(), async (req, res) => {
   }
 });
 
-// ============================================================
-// 🟣 GET PRODUCTS
-// ============================================================
+// GET PRODUCTS (admin)
 router.get("/products", protect, admin, async (req, res) => {
   try {
     const products = await Product.find().sort({ createdAt: -1 });
@@ -222,9 +209,7 @@ router.get("/products", protect, admin, async (req, res) => {
   }
 });
 
-// ============================================================
-// 🔴 DELETE PRODUCT
-// ============================================================
+// DELETE PRODUCT
 router.delete("/products/:id", protect, admin, async (req, res) => {
   try {
     const deleted = await Product.findByIdAndDelete(req.params.id);
@@ -236,9 +221,7 @@ router.delete("/products/:id", protect, admin, async (req, res) => {
   }
 });
 
-// ============================================================
-// ✅ GET ALL USERS
-// ============================================================
+// GET ALL USERS
 router.get("/users", protect, admin, async (req, res) => {
   try {
     const users = await User.find({}, "-password").sort({ createdAt: -1 });
@@ -249,9 +232,7 @@ router.get("/users", protect, admin, async (req, res) => {
   }
 });
 
-// ============================================================
-// ✅ GET ALL ORDERS
-// ============================================================
+// GET ALL ORDERS
 router.get("/orders", protect, admin, async (req, res) => {
   try {
     const orders = await Order.find()
